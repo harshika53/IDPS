@@ -19,7 +19,7 @@ Traditional **Intrusion Detection and Prevention Systems (IDPS)** rely heavily o
 ## Tech Stack
 - **Frontend**: React.js
 - **Backend**: Python (Flask), Redis, Redis Caching
-- **APIs & Tools**: VirusTotal API, Web Scraping, Grafana for monitoring  
+- **APIs & Tools**: VirusTotal API, Web Scraping  
 
 ----
 
