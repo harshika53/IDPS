@@ -31,6 +31,3 @@ Traditional **Intrusion Detection and Prevention Systems (IDPS)** rely heavily o
 
 ----
 
-## Conclusion
-This project **bridges the gap between traditional IDPS and modern cybersecurity challenges** by integrating **real-time detection, AI-driven insights, and scalable deployment**. With **proactive threat mitigation and reduced false positives**, it offers a **robust, efficient, and future-ready** security solution.
-
