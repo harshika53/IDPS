@@ -1,6 +1,6 @@
 # Intrusion Detection and Prevention System (IDPS)
 
-A **Python-based IDPS** integrating **real-time link scanning, redis caching and anomaly detection** to enhance security.
+A **Python Web-based IDPS**  integrating **real-time link scanning, redis caching and anomaly detection** to enhance security.
 
 ## Problem Statement
 Traditional **Intrusion Detection and Prevention Systems (IDPS)** rely heavily on signature-based methods, making them ineffective against **zero-day attacks and evolving cyber threats**. Additionally, **high false-positive rates** and **lack of scalability** hinder their efficiency. This project aims to **enhance threat detection capabilities** using **machine learning, real-time scanning, and containerization**, providing a **scalable and proactive security solution**.
