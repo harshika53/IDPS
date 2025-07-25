@@ -1,44 +1,47 @@
-import requests
+# In webscrapping.py
+
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
+import time
 
-# Function to scrape all links from a URL
-def scrape_links(url):
+def get_dynamic_page_content(url):
+    """
+    Fetches the full HTML content from a URL after JavaScript has rendered it.
+    """
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")  # Runs Chrome in headless mode.
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+
+    driver = None # Initialize driver to None
     try:
-        # Send a GET request to the URL
-        response = requests.get(url, timeout=5)
-        response.raise_for_status()  # Ensure we received a successful response
+        driver = webdriver.Chrome(options=chrome_options)
+        driver.get(url)
 
-        # Parse the HTML content with BeautifulSoup
-        soup = BeautifulSoup(response.text, 'html.parser')
-        links = [a['href'] for a in soup.find_all('a', href=True)]
+        # Wait for a few seconds to allow JS to load.
+        # For more complex sites, you might need more advanced waiting strategies.
+        time.sleep(3) 
 
-        print(f"Found {len(links)} links.")  # Debugging
-        return links
-    except requests.RequestException as e:
-        print(f"Error accessing {url}: {e}")
-        return []
-       
-
-# Function to scrape and filter suspicious links
-def scrape_links_with_filter(url):
-    try:
-        # Send a GET request to the URL
-        response = requests.get(url, timeout=5)
-        response.raise_for_status()
-        
-        # Parse the HTML content
-        soup = BeautifulSoup(response.text, 'html.parser')
-        content = soup.get_text().lower()
-        print("Extracted Content:", content[:500])  # Log first 500 characters
-        
-        suspicious_patterns = ["phishing", "malware", "suspicious"]
-        if any(pattern in content for pattern in suspicious_patterns):
-            print(f"Suspicious pattern found in {url}")
-            return [], ["suspicious pattern"]
-
-        return [], []  # No suspicious links
+        html_content = driver.page_source
+        return html_content
     except Exception as e:
-        print(f"Error accessing {url}: {e}")
-        return [], []
+        print(f"Error fetching dynamic content for {url}: {e}")
+        return None
+    finally:
+        if driver:
+            driver.quit()
 
+def scrape_and_has_form(url):
+    """
+    Re-implement the original function to use the new dynamic content fetcher.
+    """
+    html = get_dynamic_page_content(url)
+    if not html:
+        return False, "Could not fetch page content"
+
+    soup = BeautifulSoup(html, 'html.parser')
+    # The rest of your logic to find forms remains the same
+    forms = soup.find_all('form')
+    return len(forms) > 0, f"Found {len(forms)} forms"
        
