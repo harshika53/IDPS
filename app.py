@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from urls import add_to_whitelist, add_to_blacklist, get_whitelisted, get_blacklisted
 import redis_config as redis_config
 from passive_scanning import check_virustotal
-from webscrapping import scrape_links_with_filter
+from webscrapping import scrape_and_has_form
 from scanner import check_url, scrape_and_scan 
 from utility import send_alert, log_scan_result
 from flask import send_from_directory, jsonify
@@ -17,7 +17,7 @@ app = Flask(__name__)
 STATIC_FOLDER = 'static'
 
 # VirusTotal API key
-VIRUSTOTAL_API_KEY = "f506c767fc5f3764b4d20bd2d3d104a9d88eaec45c7f3cddb156ef3def82046d"  # Ensure the API key is correct and kept secure
+VIRUSTOTAL_API_KEY = "5fa54f5b2c07367e5f6796db0a5938ff389b1b69449d6d8deaa5347142051727"  # Ensure the API key is correct and kept secure
 
 # Serve the main HTML page
 @app.route('/')
@@ -68,17 +68,22 @@ def passive_scan():
     virus_total_risk = check_virustotal(url)  # Uses VirusTotal API
     print("VirusTotal Risk Level:", virus_total_risk)
 
-    # Perform scraping and content analysis
-    web_scrape_risk = scrape_url_content(url)  # Scrapes webpage content and checks for risk
-    print("Web Scrape Risk Level:", web_scrape_risk)
+   # Perform scraping and content analysis with the new dynamic scraper
+is_risky, web_scrape_risk = scrape_and_has_form(url)
+print("Web Scrape Risk Level:", web_scrape_risk)
 
     # Determine if the URL should be blacklisted or whitelisted
-    if virus_total_risk in ["high", "medium"] or "suspicious" in web_scrape_risk.lower():
+    if virus_total_risk in ["high", "medium"] or is_risky:
         add_to_blacklist(url, redis_config.redis_client)
         print(f"{url} added to blacklist")
         log_scan_result(url, {"status": "unsafe", "source": "scan"})  # Log scan result
         send_alert(f"Suspicious activity detected for URL: {url}")  # Send alert
         return jsonify({"url": url, "status": "unsafe", "source": "scan"}), 200
+    else:
+        add_to_whitelist(url, redis_config.redis_client)
+        print(f"{url} added to whitelist")
+        log_scan_result(url, {"status": "safe", "source": "scan"})  # Log scan result
+        return jsonify({"url": url, "status": "safe", "source": "scan"}), 200
 
     # If URL is safe, add it to the whitelist
     add_to_whitelist(url, redis_config.redis_client)
