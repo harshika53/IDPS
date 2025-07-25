@@ -4,25 +4,33 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import time
+import random
+
+USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0',
+]
 
 def get_dynamic_page_content(url):
     """
-    Fetches the full HTML content from a URL after JavaScript has rendered it.
+    Updated function with User-Agent rotation and throttling.
     """
     chrome_options = Options()
-    chrome_options.add_argument("--headless")  # Runs Chrome in headless mode.
+    chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
+    # Rotate User-Agent
+    chrome_options.add_argument(f'user-agent={random.choice(USER_AGENTS)}')
 
-    driver = None # Initialize driver to None
+    driver = None
     try:
+        # Add a random delay to be less predictable
+        time.sleep(random.uniform(1, 4))
+        
         driver = webdriver.Chrome(options=chrome_options)
         driver.get(url)
-
-        # Wait for a few seconds to allow JS to load.
-        # For more complex sites, you might need more advanced waiting strategies.
-        time.sleep(3) 
-
+        time.sleep(3)
         html_content = driver.page_source
         return html_content
     except Exception as e:
