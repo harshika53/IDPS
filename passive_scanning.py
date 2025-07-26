@@ -2,48 +2,49 @@ import os
 import requests
 from dotenv import load_dotenv
 
-# Load API key from .env file
+# Load environment variables from .env file at the start
 load_dotenv()
-VIRUSTOTAL_API_KEY = os.getenv("5fa54f5b2c07367e5f6796db0a5938ff389b1b69449d6d8deaa5347142051727")
+VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY")
 
 def check_url_risk(url):
     """
     Checks the URL using the VirusTotal API and returns a risk level.
+    This function now correctly loads the API key from your .env file.
     """
     if not VIRUSTOTAL_API_KEY:
-        print("Error: VirusTotal API key not found.")
+        print("Error: VIRUSTOTAL_API_KEY not found in .env file.")
+        return "error" # Return an error state
+
+    # Encode the URL to be safe for the API request
+    try:
+        encoded_url = requests.utils.quote(url, safe='')
+    except Exception:
+        # Handle cases where the URL is malformed
         return "error"
 
-    # 1. The input 'url' is encoded to be safely used in a URL.
-    # This turns characters like '/' and ':' into their %xx equivalents.
-    encoded_url = requests.utils.quote(url, safe='')
-
-    # 2. Python's f-string inserts the value of the 'encoded_url' variable here.
-    # THIS LINE IS CORRECT. DO NOT CHANGE IT.
     api_url = f"https://www.virustotal.com/api/v3/urls/{encoded_url}"
-
-    headers = {
-        "x-apikey": VIRUSTOTAL_API_KEY
-    }
+    headers = { "x-apikey": VIRUSTOTAL_API_KEY }
 
     try:
-        response = requests.get(api_url, headers=headers)
+        response = requests.get(api_url, headers=headers, timeout=15)
+        
         if response.status_code == 200:
             data = response.json()
-            # This logic checks how many security vendors flagged the URL as malicious.
-            positives = data.get("data", {}).get("attributes", {}).get("last_analysis_stats", {}).get("malicious", 0)
+            analysis_stats = data.get("data", {}).get("attributes", {}).get("last_analysis_stats", {})
             
-            if positives > 5:
+            # Check how many security vendors flagged the URL as malicious
+            malicious_votes = analysis_stats.get("malicious", 0)
+            
+            if malicious_votes > 5:
                 return "high"
-            elif positives > 0: # Even one flag is medium risk
+            elif malicious_votes > 0:
                 return "medium"
             else:
-                return "low" # No malicious flags
+                return "low" # Considered safe
         else:
-            print(f"Error from VirusTotal API: Status {response.status_code}")
+            print(f"VirusTotal API Error: Status {response.status_code} - {response.text}")
             return "error"
             
     except requests.RequestException as e:
-        print(f"Error making request to VirusTotal: {e}")
+        print(f"Error during VirusTotal request: {e}")
         return "error"
-
