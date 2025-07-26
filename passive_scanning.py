@@ -6,18 +6,21 @@ load_dotenv()
 VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY")
 
 def check_url_risk(url):
+    """
+    Checks the URL using the VirusTotal API and returns a risk level.
+    """
     print("[DEBUG-VT] Running VirusTotal check...")
     if not VIRUSTOTAL_API_KEY:
-        print("[DEBUG-VT] ERROR: VirusTotal API key not found.")
+        print("[DEBUG-VT] ERROR: VirusTotal API key not found in .env file.")
         return "error"
 
     try:
         encoded_url = requests.utils.quote(url, safe='')
         api_url = f"https://www.virustotal.com/api/v3/urls/{encoded_url}"
         headers = {"x-apikey": VIRUSTOTAL_API_KEY}
-        print(f"[DEBUG-VT] Making request to: {api_url}")
-
-        response = requests.get(api_url, headers=headers, timeout=15)
+        
+        print(f"[DEBUG-VT] Making request to VirusTotal API...")
+        response = requests.get(api_url, headers=headers, timeout=20)
         print(f"[DEBUG-VT] API Response Status Code: {response.status_code}")
 
         if response.status_code == 200:
