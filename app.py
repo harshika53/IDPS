@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template, send_from_directory
 import os
 from dotenv import load_dotenv
 import csv
+from scanner import advanced_url_analysis
 
 # Load environment variables from .env file
 load_dotenv()
@@ -44,49 +45,56 @@ def download_csv(filename):
 @app.route('/passive_scan', methods=['POST'])
 def passive_scan():
     """
-    Scans a URL using VirusTotal and our dynamic web scraper, then classifies it.
-    (This version includes detailed debugging print statements).
+    Scans a URL using a multi-layered approach:
+    1. Local pattern/heuristic analysis.
+    2. VirusTotal API check.
+    3. Dynamic content analysis.
     """
-    print("\n--- NEW SCAN INITIATED ---")
     data = request.get_json()
     if not data or 'url' not in data:
-        print("[DEBUG] ERROR: No URL found in request.")
         return jsonify({"error": "URL is required"}), 400
 
     url = data['url']
-    print(f"[DEBUG] 1. Received URL for scanning: {url}")
+    print(f"Scanning URL: {url}")
 
     # Check cache first
     if redis_config.redis_client.sismember('whitelist', url):
-        print(f"[DEBUG] 2. Result: Found in whitelist (cache).")
         return jsonify({"url": url, "status": "safe", "source": "whitelist"}), 200
+    
     if redis_config.redis_client.sismember('blacklist', url):
-        print(f"[DEBUG] 2. Result: Found in blacklist (cache).")
         return jsonify({"url": url, "status": "unsafe", "source": "blacklist"}), 200
 
-    # 1. Perform VirusTotal analysis
-    print("[DEBUG] 3. Calling VirusTotal function (check_url_risk)...")
-    virus_total_risk = check_url_risk(url)
-    print(f"[DEBUG] 4. Received from VirusTotal: '{virus_total_risk}'")
+    # --- NEW INTEGRATED LOGIC ---
 
-    # 2. Perform dynamic content analysis
-    print("[DEBUG] 5. Calling web scraping function (scrape_and_has_form)...")
-    is_risky, web_scrape_analysis = scrape_and_has_form(url)
-    print(f"[DEBUG] 6. Received from web scraper: is_risky={is_risky}, analysis='{web_scrape_analysis}'")
+    # 1. Perform your own local, pattern-based scan first.
+    risk_score, reasons = advanced_url_analysis(url)
+    print(f"Local Scan Risk Score: {risk_score}, Reasons: {reasons}")
 
-    # 3. Classify based on combined results
-    print("[DEBUG] 7. Making final decision...")
-    if virus_total_risk in ["high", "medium"] or is_risky:
+    # If your local scanner finds high risk, blacklist it immediately.
+    if risk_score >= 5: # Threshold can be adjusted
         add_to_blacklist(url, redis_config.redis_client)
-        print(f"[DEBUG] 8. FINAL DECISION: Unsafe. Added to blacklist.")
-        log_scan_result(url, {"status": "unsafe", "source": "scan"})
-        send_alert(f"Suspicious activity detected for URL: {url}")
-        return jsonify({"url": url, "status": "unsafe", "source": "scan"}), 200
+        log_scan_result(url, {"status": "unsafe", "source": "local_scan"})
+        return jsonify({"url": url, "status": "unsafe", "source": "local_scan"}), 200
+
+    # 2. If the local scan is inconclusive, proceed to VirusTotal.
+    virus_total_risk = check_url_risk(url)
+    print(f"VirusTotal Risk Level: {virus_total_risk}")
+
+    # 3. Finally, check for phishing forms on the live page.
+    is_risky_content, web_scrape_analysis = scrape_and_has_form(url)
+    print(f"Web Scrape Analysis: {web_scrape_analysis}")
+
+    # --- FINAL DECISION ---
+    # Blacklist if VirusTotal finds a threat OR if the page has risky content.
+    if virus_total_risk in ["high", "medium"] or is_risky_content:
+        add_to_blacklist(url, redis_config.redis_client)
+        log_scan_result(url, {"status": "unsafe", "source": "vt_or_scrape"})
+        return jsonify({"url": url, "status": "unsafe", "source": "vt_or_scrape"}), 200
     else:
+        # If all checks pass, it's safe.
         add_to_whitelist(url, redis_config.redis_client)
-        print(f"[DEBUG] 8. FINAL DECISION: Safe. Added to whitelist.")
-        log_scan_result(url, {"status": "safe", "source": "scan"})
-        return jsonify({"url": url, "status": "safe", "source": "scan"}), 200
+        log_scan_result(url, {"status": "safe", "source": "all_checks"})
+        return jsonify({"url": url, "status": "safe", "source": "all_checks"}), 200
     
 @app.route('/add_to_whitelist', methods=['POST'])
 def whitelist_url():
