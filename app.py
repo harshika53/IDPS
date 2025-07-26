@@ -43,43 +43,49 @@ def download_csv(filename):
 def passive_scan():
     """
     Scans a URL using VirusTotal and our dynamic web scraper, then classifies it.
+    (This version includes detailed debugging print statements).
     """
+    print("\n--- NEW SCAN INITIATED ---")
     data = request.get_json()
     if not data or 'url' not in data:
+        print("[DEBUG] ERROR: No URL found in request.")
         return jsonify({"error": "URL is required"}), 400
 
     url = data['url']
-    print(f"Scanning URL: {url}")
+    print(f"[DEBUG] 1. Received URL for scanning: {url}")
 
     # Check cache first
     if redis_config.redis_client.sismember('whitelist', url):
-        print(f"{url} found in whitelist (cache)")
+        print(f"[DEBUG] 2. Result: Found in whitelist (cache).")
         return jsonify({"url": url, "status": "safe", "source": "whitelist"}), 200
     if redis_config.redis_client.sismember('blacklist', url):
-        print(f"{url} found in blacklist (cache)")
+        print(f"[DEBUG] 2. Result: Found in blacklist (cache).")
         return jsonify({"url": url, "status": "unsafe", "source": "blacklist"}), 200
 
     # 1. Perform VirusTotal analysis
+    print("[DEBUG] 3. Calling VirusTotal function (check_url_risk)...")
     virus_total_risk = check_url_risk(url)
-    print(f"VirusTotal Risk Level: {virus_total_risk}")
+    print(f"[DEBUG] 4. Received from VirusTotal: '{virus_total_risk}'")
 
     # 2. Perform dynamic content analysis
+    print("[DEBUG] 5. Calling web scraping function (scrape_and_has_form)...")
     is_risky, web_scrape_analysis = scrape_and_has_form(url)
-    print(f"Web Scrape Analysis: {web_scrape_analysis}")
+    print(f"[DEBUG] 6. Received from web scraper: is_risky={is_risky}, analysis='{web_scrape_analysis}'")
 
     # 3. Classify based on combined results
+    print("[DEBUG] 7. Making final decision...")
     if virus_total_risk in ["high", "medium"] or is_risky:
         add_to_blacklist(url, redis_config.redis_client)
-        print(f"{url} added to blacklist")
+        print(f"[DEBUG] 8. FINAL DECISION: Unsafe. Added to blacklist.")
         log_scan_result(url, {"status": "unsafe", "source": "scan"})
         send_alert(f"Suspicious activity detected for URL: {url}")
         return jsonify({"url": url, "status": "unsafe", "source": "scan"}), 200
     else:
         add_to_whitelist(url, redis_config.redis_client)
-        print(f"{url} added to whitelist")
+        print(f"[DEBUG] 8. FINAL DECISION: Safe. Added to whitelist.")
         log_scan_result(url, {"status": "safe", "source": "scan"})
         return jsonify({"url": url, "status": "safe", "source": "scan"}), 200
-
+    
 @app.route('/add_to_whitelist', methods=['POST'])
 def whitelist_url():
     """
