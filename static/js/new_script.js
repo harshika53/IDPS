@@ -7,6 +7,34 @@ document.addEventListener('DOMContentLoaded', function () {
     const blacklistUl = document.getElementById('blacklist-ul');
     const activityLog = document.getElementById('activity-log-content');
     const toastEl = document.getElementById('toast-notification');
+    const navLinks = document.querySelectorAll('.nav-link');
+    const views = document.querySelectorAll('.view');
+    const mainTitle = document.getElementById('main-title');
+
+    // --- Navigation Logic ---
+    navLinks.forEach(link => {
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            // Update active link
+            navLinks.forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+
+            const targetId = this.getAttribute('href');
+            
+            // Update main title
+            mainTitle.textContent = this.textContent.replace(this.querySelector('span').textContent, '').trim();
+
+            // Show target view and hide others
+            views.forEach(view => {
+                if (view.id === targetId.substring(1)) {
+                    view.classList.add('active-view');
+                } else {
+                    view.classList.remove('active-view');
+                }
+            });
+        });
+    });
 
     // --- Chart.js Setup ---
     let scanChart;
@@ -27,17 +55,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
+                responsive: true, maintainAspectRatio: false,
                 plugins: {
                     legend: {
                         position: 'bottom',
-                        labels: {
-                            color: '#e0e0e0',
-                            font: {
-                                size: 14
-                            }
-                        }
+                        labels: { color: '#e0e0e0', font: { size: 14 } }
                     }
                 },
                 cutout: '70%'
@@ -46,42 +68,31 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateChart(status) {
-        if (status === 'safe') {
-            chartData.safe++;
-        } else if (status === 'unsafe') {
-            chartData.unsafe++;
-        }
+        if (status === 'safe') chartData.safe++;
+        else if (status === 'unsafe') chartData.unsafe++;
         scanChart.data.datasets[0].data = [chartData.safe, chartData.unsafe];
         scanChart.update();
     }
 
-
-    // --- Core Functions ---
+    // --- Core API Functions ---
     async function performScan() {
         const url = urlInput.value.trim();
         if (!url) {
             showToast('Please enter a URL.', 'info');
             return;
         }
-
         scanStatusEl.textContent = 'Scanning...';
         scanStatusEl.className = '';
         logActivity(`Scanning initiated for: ${url}`);
-
         try {
             const response = await fetch('/passive_scan', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: url })
             });
-
-            if (!response.ok) {
-                throw new Error('Network response was not ok.');
-            }
-
+            if (!response.ok) throw new Error('Network response was not ok.');
             const result = await response.json();
             updateUI(result);
-
         } catch (error) {
             console.error('Scan Error:', error);
             scanStatusEl.textContent = 'Scan failed.';
@@ -94,16 +105,9 @@ document.addEventListener('DOMContentLoaded', function () {
     function updateUI(result) {
         scanStatusEl.textContent = result.status;
         scanStatusEl.className = result.status; // 'safe' or 'unsafe'
-        
         showToast(`URL is ${result.status}. Source: ${result.source}`, result.status);
         logActivity(`Result for ${result.url}: ${result.status} (from ${result.source})`);
-        
-        // Update chart only for new scans
-        if (result.source === 'scan') {
-            updateChart(result.status);
-        }
-
-        // Refresh lists
+        if (result.source === 'scan') updateChart(result.status);
         fetchLists();
         urlInput.value = '';
     }
@@ -116,7 +120,6 @@ document.addEventListener('DOMContentLoaded', function () {
             ]);
             const whitelistData = await whitelistRes.json();
             const blacklistData = await blacklistRes.json();
-
             populateList(whitelistUl, whitelistData.whitelisted_urls);
             populateList(blacklistUl, blacklistData.blacklisted_urls);
         } catch (error) {
@@ -136,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const li = document.createElement('li');
             li.textContent = url;
             ulElement.appendChild(li);
-        });
+});
     }
 
     function logActivity(message) {
@@ -160,9 +163,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- Event Listeners ---
     scanButton.addEventListener('click', performScan);
     urlInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            performScan();
-        }
+        if (e.key === 'Enter') performScan();
     });
 
     // --- Initial Load ---
