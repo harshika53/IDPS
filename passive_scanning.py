@@ -1,43 +1,49 @@
+import os
 import requests
-import base64
+from dotenv import load_dotenv
 
-# Replace this with your actual VirusTotal API key
-VIRUSTOTAL_API_KEY = "f506c767fc5f3764b4d20bd2d3d104a9d88eaec45c7f3cddb156ef3def82046d"
+# Load API key from .env file
+load_dotenv()
+VIRUSTOTAL_API_KEY = os.getenv("5fa54f5b2c07367e5f6796db0a5938ff389b1b69449d6d8deaa5347142051727")
 
-def check_virustotal(url):
-    """Check the URL using VirusTotal API and return threat level."""
-    headers = {"x-apikey": VIRUSTOTAL_API_KEY}
-    
-    # Encode the URL to base64 URL-safe format for VirusTotal API
-    encoded_url = base64.urlsafe_b64encode(url.encode()).decode().strip("=")
-    #print(f"Encoded URL Hash: {url_hash}")  # Debugging: Print the URL hash
-    
+def check_url_risk(url):
+    """
+    Checks the URL using the VirusTotal API and returns a risk level.
+    """
+    if not VIRUSTOTAL_API_KEY:
+        print("Error: VirusTotal API key not found.")
+        return "error"
+
+    # 1. The input 'url' is encoded to be safely used in a URL.
+    # This turns characters like '/' and ':' into their %xx equivalents.
+    encoded_url = requests.utils.quote(url, safe='')
+
+    # 2. Python's f-string inserts the value of the 'encoded_url' variable here.
+    # THIS LINE IS CORRECT. DO NOT CHANGE IT.
     api_url = f"https://www.virustotal.com/api/v3/urls/{encoded_url}"
 
-    try:
-        # Send a GET request to the VirusTotal API
-        response = requests.get(api_url, headers=headers)
+    headers = {
+        "x-apikey": VIRUSTOTAL_API_KEY
+    }
 
-        # Check if the request was successful
+    try:
+        response = requests.get(api_url, headers=headers)
         if response.status_code == 200:
             data = response.json()
-            
-            # Extract the number of malicious detections
+            # This logic checks how many security vendors flagged the URL as malicious.
             positives = data.get("data", {}).get("attributes", {}).get("last_analysis_stats", {}).get("malicious", 0)
             
-            # Determine threat level based on malicious detections
             if positives > 5:
                 return "high"
-            elif positives > 1:
+            elif positives > 0: # Even one flag is medium risk
                 return "medium"
             else:
-                return "low"
+                return "low" # No malicious flags
         else:
-            # Handle unsuccessful responses
-            print(f"Error: Received status code {response.status_code} from VirusTotal API.")
+            print(f"Error from VirusTotal API: Status {response.status_code}")
             return "error"
-    except Exception as e:
-        # Handle request errors
-        print(f"Error connecting to VirusTotal: {e}")
+            
+    except requests.RequestException as e:
+        print(f"Error making request to VirusTotal: {e}")
         return "error"
 
