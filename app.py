@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, render_template, send_from_directory
 import os
 from dotenv import load_dotenv
+import csv
 
 # Load environment variables from .env file
 load_dotenv()
@@ -122,6 +123,29 @@ def get_blacklist():
     """
     urls = get_blacklisted(redis_config.redis_client)
     return jsonify({"blacklisted_urls": urls}), 200
+
+@app.route('/get_logs', methods=['GET'])
+def get_activity_logs():
+    """
+    Reads the admin_data.csv log file and returns its content.
+    """
+    log_file_path = os.path.join(app.config.get('STATIC_FOLDER'), 'admin_data.csv')
+    logs = []
+    try:
+        # Open and read the CSV file
+        with open(log_file_path, mode='r', newline='', encoding='utf-8') as csvfile:
+            # Use DictReader to make each row a dictionary
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                logs.append(row)
+        # Return the most recent logs first
+        return jsonify(list(reversed(logs)))
+    except FileNotFoundError:
+        # If the file doesn't exist yet, return an empty list
+        return jsonify([])
+    except Exception as e:
+        print(f"Error reading log file: {e}")
+        return jsonify({"error": "Could not read log file."}), 500
 
 @app.route('/notifications')
 def notifications():
