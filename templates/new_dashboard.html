@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IDPS Advanced Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='new_style.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>IDPS</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#scan" class="active"><span>&#128270;</span> URL Scanner</a>
+                <a href="#lists"><span>&#128220;</span> Manage Lists</a>
+                <a href="#stats"><span>&#128202;</span> Statistics</a>
+                <a href="#logs"><span>&#128196;</span> Activity Logs</a>
+            </nav>
+            <div class="sidebar-footer">
+                <p>&copy; 2025 IDPS Project</p>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="main-header">
+                <h1>Dashboard Overview</h1>
+                <div id="toast-notification" class="toast"></div>
+            </header>
+
+            <div class="card-grid">
+                <div class="card" id="scan">
+                    <h3>Real-Time URL Scanner</h3>
+                    <p>Enter a URL to perform a quick and passive security scan.</p>
+                    <div class="scan-form">
+                        <input type="text" id="url-input" placeholder="https://example.com">
+                        <button id="scan-button">Scan Now</button>
+                    </div>
+                    <div id="scan-result" class="scan-result-area">
+                        <p>Status: <span id="scan-status">Awaiting scan...</span></p>
+                    </div>
+                </div>
+
+                <div class="card" id="stats">
+                    <h3>Scan Statistics</h3>
+                    <p>Live summary of scanned URLs.</p>
+                    <div class="chart-container">
+                        <canvas id="scan-chart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="card list-card" id="lists">
+                    <h3>Whitelist</h3>
+                    <ul id="whitelist-ul">
+                        </ul>
+                    <a href="{{ url_for('view_csv', filename='whitelist.csv') }}" class="download-btn" download>Download .csv</a>
+                </div>
+
+                <div class="card list-card">
+                    <h3>Blacklist</h3>
+                    <ul id="blacklist-ul">
+                        </ul>
+                    <a href="{{ url_for('view_csv', filename='blacklist.csv') }}" class="download-btn" download>Download .csv</a>
+                </div>
+
+                <div class="card" id="logs">
+                    <h3>Activity Logs</h3>
+                    <div id="activity-log-content">
+                        <p class="log-entry">System initialized successfully.</p>
+                    </div>
+                     <a href="{{ url_for('view_csv', filename='admin_data.csv') }}" class="download-btn" download>Download Logs</a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='new_script.js') }}"></script>
+</body>
+</html>
