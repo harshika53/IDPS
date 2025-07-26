@@ -22,7 +22,7 @@ def home():
     """
     Serves the main HTML page.
     """
-    return render_template('demopg.html')
+    return render_template('new_dashboard.html')
 
 @app.route('/passive_scan', methods=['POST'])
 def passive_scan():
