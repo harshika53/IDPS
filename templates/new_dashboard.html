@@ -57,14 +57,14 @@
                     <h3>Whitelist</h3>
                     <ul id="whitelist-ul">
                         </ul>
-                    <a href="{{ url_for('view_csv', filename='whitelist.csv') }}" class="download-btn" download>Download .csv</a>
+                    <a href="{{ url_for('download_csv', filename='whitelist.csv') }}" class="download-btn" download>Download .csv</a>
                 </div>
 
                 <div class="card list-card">
                     <h3>Blacklist</h3>
                     <ul id="blacklist-ul">
                         </ul>
-                    <a href="{{ url_for('view_csv', filename='blacklist.csv') }}" class="download-btn" download>Download .csv</a>
+                    <a href="{{ url_for('download_csv', filename='blacklist.csv') }}" class="download-btn" download>Download .csv</a>
                 </div>
 
                 <div class="card" id="logs">
@@ -72,7 +72,7 @@
                     <div id="activity-log-content">
                         <p class="log-entry">System initialized successfully.</p>
                     </div>
-                     <a href="{{ url_for('view_csv', filename='admin_data.csv') }}" class="download-btn" download>Download Logs</a>
+                     <a href="{{ url_for('download_csv', filename='admin_data.csv') }}" class="download-btn" download>Download Logs</a>
                 </div>
             </div>
         </main>

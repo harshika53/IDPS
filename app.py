@@ -8,12 +8,15 @@ load_dotenv()
 # Custom module imports
 from urls import add_to_whitelist, add_to_blacklist, get_whitelisted, get_blacklisted
 import redis_config as redis_config
-from passive_scanning import check_url_risk # Updated import
-from webscrapping import scrape_and_has_form # Updated import
+from passive_scanning import check_url_risk
+from webscrapping import scrape_and_has_form
 from utility import send_alert, log_scan_result
 
 # Initialize Flask app
 app = Flask(__name__)
+# Define the static folder path for file downloads
+app.config['STATIC_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+
 
 # --- App Routes ---
 
@@ -23,6 +26,18 @@ def home():
     Serves the main HTML page.
     """
     return render_template('new_dashboard.html')
+
+@app.route('/download_csv/<path:filename>')
+def download_csv(filename):
+    """
+    Provides CSV files for download from the static directory.
+    """
+    static_folder = app.config.get('STATIC_FOLDER')
+    try:
+        return send_from_directory(static_folder, filename, as_attachment=True)
+    except FileNotFoundError:
+        return jsonify({"error": "File not found."}), 404
+
 
 @app.route('/passive_scan', methods=['POST'])
 def passive_scan():
