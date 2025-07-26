@@ -49,32 +49,40 @@ def get_notifications():
 
 @app.route('/passive_scan', methods=['POST'])
 def passive_scan():
-    """Scans a URL and handles notifications."""
+    print("\n--- NEW SCAN INITIATED ---")
     data = request.get_json()
     if not data or 'url' not in data:
+        print("[DEBUG] ERROR: No URL found in request.")
         return jsonify({"error": "URL is required"}), 400
 
     url = data['url']
-    
-    # Check cache first
+    print(f"[DEBUG] 1. Received URL for scanning: {url}")
+
     if redis_config.redis_client.sismember('whitelist', url):
+        print(f"[DEBUG] 2. Result: Found in whitelist (cache).")
         return jsonify({"url": url, "status": "safe", "source": "whitelist"}), 200
     if redis_config.redis_client.sismember('blacklist', url):
+        print(f"[DEBUG] 2. Result: Found in blacklist (cache).")
         return jsonify({"url": url, "status": "unsafe", "source": "blacklist"}), 200
 
-    # Perform scans
+    print("[DEBUG] 3. Calling VirusTotal function...")
     virus_total_risk = check_url_risk(url)
-    is_risky, web_scrape_analysis = scrape_and_has_form(url)
+    print(f"[DEBUG] 4. Received from VirusTotal: '{virus_total_risk}'")
 
-    # Classify and send alerts
+    print("[DEBUG] 5. Calling web scraping function...")
+    is_risky, web_scrape_analysis = scrape_and_has_form(url)
+    print(f"[DEBUG] 6. Received from web scraper: is_risky={is_risky}, analysis='{web_scrape_analysis}'")
+
+    print("[DEBUG] 7. Making final decision...")
     if virus_total_risk in ["high", "medium"] or is_risky:
         add_to_blacklist(url, redis_config.redis_client)
-        log_scan_result(url, {"status": "unsafe", "source": "scan"})
-        # --- Send an alert when a threat is found ---
+        print(f"[DEBUG] 8. FINAL DECISION: Unsafe. Added to blacklist.")
         send_alert(f"Threat detected and blocked: {url}")
+        log_scan_result(url, {"status": "unsafe", "source": "scan"})
         return jsonify({"url": url, "status": "unsafe", "source": "scan"}), 200
     else:
         add_to_whitelist(url, redis_config.redis_client)
+        print(f"[DEBUG] 8. FINAL DECISION: Safe. Added to whitelist.")
         log_scan_result(url, {"status": "safe", "source": "scan"})
         return jsonify({"url": url, "status": "safe", "source": "scan"}), 200
 
