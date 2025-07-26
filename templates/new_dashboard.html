@@ -71,14 +71,22 @@
             </div>
             
             <div id="view-logs" class="view">
-                 <div class="card">
-                    <h3>Activity Logs</h3>
-                    <div id="activity-log-content">
-                        <p class="log-entry">System initialized successfully.</p>
-                    </div>
-                     <a href="{{ url_for('download_csv', filename='admin_data.csv') }}" class="download-btn" download>Download All Logs</a>
-                </div>
-            </div>
+    <div class="card notification-card">
+        <h3>Recent Threat Alerts</h3>
+        <div id="notification-list">
+            <p class="log-entry">No recent alerts.</p>
+        </div>
+    </div>
+
+    <div class="card">
+       <h3>All Activity Logs</h3>
+       <p>A persistent record of all scans (safe and unsafe) is kept in the downloadable CSV file.</p>
+       <div id="activity-log-content">
+           <p class="log-entry">System initialized successfully.</p>
+       </div>
+        <a href="../static/admin_data.csv" class="download-btn" download>Download Full Log (.csv)</a>
+   </div>
+</div>
 
             <div id="view-faq" class="view">
                 <div class="card">
