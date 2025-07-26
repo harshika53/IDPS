@@ -20,11 +20,12 @@ def get_dynamic_page_content(url):
 
     driver = None
     try:
-        # Use webdriver_manager to automatically handle the chromedriver
+        # Use webdriver_manager to automatically install and manage chromedriver
         service = ChromeService(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=chrome_options)
         
         print(f"[DEBUG-SELENIUM] Navigating to: {url}")
+        driver.set_page_load_timeout(30) # Add a timeout
         driver.get(url)
         time.sleep(3) # Wait for JS to potentially load
         html_content = driver.page_source
@@ -46,7 +47,7 @@ def scrape_and_has_form(url):
     if not html:
         return False, "Could not fetch page content"
         
-    soup = BeautifulSoup(html, 'html.parser')
+    soup = BeautifulSoup(html, 'parser')
     forms = soup.find_all('form')
     
     if len(forms) > 0:

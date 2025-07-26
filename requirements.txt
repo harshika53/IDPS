@@ -5,3 +5,4 @@ beautifulsoup4
 selenium
 SQLAlchemy
 python-dotenv
+webdriver-manager
