@@ -26,7 +26,7 @@ def home():
     Serves the main HTML page.
     """
     return render_template('new_dashboard.html')
-
+    
 @app.route('/download_csv/<path:filename>')
 def download_csv(filename):
     """
@@ -34,9 +34,10 @@ def download_csv(filename):
     """
     static_folder = app.config.get('STATIC_FOLDER')
     try:
+        # Securely send the requested file from the static folder
         return send_from_directory(static_folder, filename, as_attachment=True)
     except FileNotFoundError:
-        return jsonify({"error": "File not found."}), 404
+        return jsonify({"error": "File not found."}), 404    
 
 
 @app.route('/passive_scan', methods=['POST'])
