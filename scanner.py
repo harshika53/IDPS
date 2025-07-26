@@ -1,37 +1,55 @@
-# scanner.py
+# In scanner.py
+
 import re
-import requests
-from bs4 import BeautifulSoup
-from patterns import (file_ext_pattern, phishing_keywords_pattern, 
-                      obfuscation_pattern, domain_misspellings_pattern, 
-                      form_pattern)
+from urllib.parse import urlparse
 
-# Function to check if a URL matches malicious patterns
-def check_url(url):
-    if re.search(file_ext_pattern, url):
-        return "Suspicious file extension detected"
-    if re.search(phishing_keywords_pattern, url, re.IGNORECASE):
-        return "Phishing keywords detected in URL"
-    if re.search(obfuscation_pattern, url):
-        return "URL is obfuscated (Base64 encoded)"
-    if re.search(domain_misspellings_pattern, url):
-        return "Suspicious domain name detected"
-    return "URL appears safe"
+# Keep your existing patterns from patterns.py
+from patterns import MALICIOUS_PATTERNS, PHISHING_KEYWORDS
 
-# Function to scrape and scan a webpage for phishing forms
-def scrape_and_scan(url):
+def advanced_url_analysis(url):
+    """
+    Performs heuristic analysis on a URL to identify suspicious characteristics.
+    Returns a risk score and a list of reasons.
+    """
+    risk_score = 0
+    reasons = []
+    
     try:
-        response = requests.get(url)
-        response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
-        
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
-        # Search for potential phishing forms
-        form_matches = re.findall(form_pattern, str(soup))
-        if form_matches:
-            return f"Potential phishing form detected: {form_matches}"
-        
-        return "Page appears clean"
-    except requests.exceptions.RequestException as e:
-        return f"Error in processing: {e}"
+        parsed_url = urlparse(url)
+        domain = parsed_url.netloc
+        path = parsed_url.path
+
+        # 1. Suspicious TLDs
+        suspicious_tlds = ['.zip', '.mov', '.xyz', '.top', '.live', '.info']
+        if any(domain.endswith(tld) for tld in suspicious_tlds):
+            risk_score += 2
+            reasons.append("Suspicious TLD")
+
+        # 2. Excessive number of subdomains (e.g., login.account.secure.paypal.com.hacker.net)
+        if domain.count('.') > 3:
+            risk_score += 1
+            reasons.append("Excessive subdomains")
+            
+        # 3. Presence of IP address in domain
+        if re.match(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}", domain):
+            risk_score += 3
+            reasons.append("IP address used as domain")
+
+        # 4. Use existing regex patterns
+        if re.search(MALICIOUS_PATTERNS, url, re.IGNORECASE):
+            risk_score += 5
+            reasons.append("Matched a known malicious pattern")
+
+        # 5. Phishing keywords in path or domain
+        if any(keyword in url.lower() for keyword in PHISHING_KEYWORDS):
+            risk_score += 2
+            reasons.append("Contains phishing keywords")
+            
+    except Exception as e:
+        reasons.append(f"Error during analysis: {e}")
+
+    return risk_score, reasons
+
+# You would then update your main logic in app.py to use this function
+# A risk_score > 5 could be considered malicious, for example.
 
