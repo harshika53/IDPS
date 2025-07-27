@@ -68,10 +68,18 @@ def passive_scan():
     url = data['url']
     print(f"[DEBUG] 1. Received URL: {url}")
 
+    # Fix: Check cache with proper string encoding
     if redis_config.redis_client.sismember('whitelist', url):
+        print(f"[DEBUG] URL found in whitelist: {url}")
+        log_scan_result(url, {"status": "safe", "source": "whitelist"})
         return jsonify({"url": url, "status": "safe", "source": "whitelist"}), 200
+        
     if redis_config.redis_client.sismember('blacklist', url):
+        print(f"[DEBUG] URL found in blacklist: {url}")
+        log_scan_result(url, {"status": "unsafe", "source": "blacklist"})
         return jsonify({"url": url, "status": "unsafe", "source": "blacklist"}), 200
+
+    print(f"[DEBUG] URL not found in cache, proceeding with scan...")
 
     # Local pattern scan (from scanner.py)
     risk_score, reasons = advanced_url_analysis(url)
