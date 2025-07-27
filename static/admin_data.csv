@@ -35,4 +35,7 @@ id,url,category,timestamp,status,source
 34,http://yourbittorrent.com/?q=anthony-hamilton-soulife,b,2025-07-28 02:17:18,unsafe,blacklist
 35,http://mp3raid.com/music/krizz_kaliko.html,b,2025-07-28 02:17:29,unsafe,blacklist
 36,escholarship.org/uc/item/5xt4952c,b,2025-07-28 02:19:00,unsafe,blacklist
-
+37,http://hollywoodlife.com/2014/05/01/rihanna-iheartradio-music-awards-dress-2014-pics/,b,2025-07-28 02:32:18,unsafe,scan_no_cache
+38,soaps.sheknows.com/daysofourlives/news/id/20259/Days_Of_Our_Lives_Casts_Ruta_Lee/,b,2025-07-28 02:32:38,unsafe,scan_no_cache
+39,https://www.gov.uk,w,2025-07-28 02:40:49,safe,scan_no_cache
+40,https://www.stanford.edu,w,2025-07-28 02:42:21,safe,scan_no_cache

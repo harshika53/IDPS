@@ -1,28 +1,30 @@
 {
   "whitelist": [
-    "https://www.truemeds.in/",
-    "https://www.google.com",
-    "https://www.reddit.com/",
-    "https://www.makemytrip.com/",
-    "https://brainly.in/",
-    "https://www.facebook.com",
+    "https://discord.com/",
     "https://www.eci.gov.in/",
-    "http://www.amazon.com",
+    "https://www.google.com",
+    "https://www.gov.uk",
+    "https://www.facebook.com",
     "https://youtube.com/",
-    "https://discord.com/"
+    "https://www.makemytrip.com/",
+    "https://www.truemeds.in/",
+    "http://www.amazon.com",
+    "https://www.reddit.com/",
+    "https://www.stanford.edu",
+    "https://brainly.in/"
   ],
   "blacklist": [
+    "http://www.lebensmittel-ueberwachung.de/index.php/aktuelles.1",
     "bopsecrets.org/rexroth/cr/1.htm",
+    "http://www.szabadmunkaero.hu/cimoldal.html?start=12",
+    "http://yourbittorrent.com/?q=anthony-hamilton-soulife",
+    "http://mp3raid.com/music/krizz_kaliko.html",
+    "http://www.pashminaonline.com/pure-pashminas",
+    "http://espn.go.com/nba/player/_/id/3457/brandon-rush",
     "http://allmusic.com/album/crazy-from-the-heat-r16990",
     "http://larcadelcarnevale.com/catalogo/palloncini",
-    "http://yourbittorrent.com/?q=anthony-hamilton-soulife",
-    "http://www.pashminaonline.com/pure-pashminas",
-    "http://www.ikenmijnkunst.nl/index.php/exposities/exposities-2006",
-    "http://espn.go.com/nba/player/_/id/3457/brandon-rush",
     "http://adventure-nicaragua.net/index.php?option=com_mailto&tmpl=component&link=aHR0cDovL2FkdmVudHVyZ...",
-    "http://www.szabadmunkaero.hu/cimoldal.html?start=12",
-    "http://www.lebensmittel-ueberwachung.de/index.php/aktuelles.1",
-    "http://mp3raid.com/music/krizz_kaliko.html"
+    "http://www.ikenmijnkunst.nl/index.php/exposities/exposities-2006"
   ],
-  "last_updated": "2025-07-28T02:26:03.151778"
+  "last_updated": "2025-07-28T02:42:21.895220"
 }
