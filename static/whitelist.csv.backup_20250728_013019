@@ -9,6 +9,3 @@ id,url,category,timestamp,status,source
 8,https://youtube.com/,w,2025-01-15 10:15:00,safe,manual
 9,https://discord.com/,w,2025-01-15 10:16:00,safe,manual
 10,http://www.amazon.com,w,2025-01-15 10:17:00,safe,manual
-11,www.google.com,w,2025-07-27 16:23:38,safe,scan
-12,www.google.com,w,2025-07-27 16:24:50,safe,whitelist
-
