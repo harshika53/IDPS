@@ -9,5 +9,5 @@ id,url,category,timestamp,status,source
 8,https://youtube.com/,w,2025-01-15 10:15:00,safe,manual
 9,https://discord.com/,w,2025-01-15 10:16:00,safe,manual
 10,http://www.amazon.com,w,2025-01-15 10:17:00,safe,manual
-
-
+11,https://log-test-safe.com,w,2025-07-28 02:49:02,safe,scan
+12,https://www.stanford.edu,w,2025-07-28 02:50:39,safe,manual_whitelist

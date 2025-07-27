@@ -39,3 +39,12 @@ id,url,category,timestamp,status,source
 38,soaps.sheknows.com/daysofourlives/news/id/20259/Days_Of_Our_Lives_Casts_Ruta_Lee/,b,2025-07-28 02:32:38,unsafe,scan_no_cache
 39,https://www.gov.uk,w,2025-07-28 02:40:49,safe,scan_no_cache
 40,https://www.stanford.edu,w,2025-07-28 02:42:21,safe,scan_no_cache
+41,https://log-test-safe.com,w,2025-07-28 02:49:02,safe,scan
+42,https://log-test-unsafe.com,b,2025-07-28 02:49:02,unsafe,scan
+43,https://www.stanford.edu,w,2025-07-28 02:50:39,safe,scan
+44,allmusic.com/album/crazy-from-the-heat-r16990,b,2025-07-28 02:51:38,unsafe,blacklist
+45,corporationwiki.com/Ohio/Columbus/frank-s-benson-P3333917.aspx,b,2025-07-28 02:52:22,unsafe,manual_blacklist
+46,corporationwiki.com/Ohio/Columbus/frank-s-benson-P3333917.aspx,b,2025-07-28 02:52:22,unsafe,scan
+47,http://larcadelcarnevale.com/catalogo/palloncini,b,2025-07-28 02:53:11,unsafe,blacklist
+48,http://www.vnic.co/khach-hang.html,b,2025-07-28 02:53:42,unsafe,manual_blacklist
+49,http://www.vnic.co/khach-hang.html,b,2025-07-28 02:53:42,unsafe,scan
