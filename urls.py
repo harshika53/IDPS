@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, Column, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from utility import update_csv_files  # Import the new CSV update function
 
 # Set up the database connection and ORM
 Base = declarative_base()
@@ -16,27 +17,41 @@ class URL(Base):
 Base.metadata.create_all(engine)
 
 def add_to_whitelist(url, cache):
-    """Adds the URL to the whitelist"""
+    """Adds the URL to the whitelist AND updates CSV files"""
     print(f"[DEBUG-URLS] Adding to whitelist: {url}")
     if not cache.sismember('whitelist', url):
         cache.sadd('whitelist', url)
         # Remove from blacklist if it exists there
         cache.srem('blacklist', url)
         save_url_to_db(url, is_blacklisted=False)
-        print(f"[DEBUG-URLS] Successfully added to whitelist: {url}")
+        
+        # NEW: Update CSV files
+        try:
+            update_csv_files(url, 'safe', 'manual_whitelist')
+            print(f"[DEBUG-URLS] Successfully added to whitelist and updated CSV: {url}")
+        except Exception as e:
+            print(f"[DEBUG-URLS] Error updating CSV files: {e}")
+        
         return True
     print(f"[DEBUG-URLS] URL already in whitelist: {url}")
     return False
 
 def add_to_blacklist(url, cache):
-    """Adds the URL to the blacklist"""
+    """Adds the URL to the blacklist AND updates CSV files"""
     print(f"[DEBUG-URLS] Adding to blacklist: {url}")
     if not cache.sismember('blacklist', url):
         cache.sadd('blacklist', url)
         # Remove from whitelist if it exists there
         cache.srem('whitelist', url)
         save_url_to_db(url, is_blacklisted=True)
-        print(f"[DEBUG-URLS] Successfully added to blacklist: {url}")
+        
+        # NEW: Update CSV files
+        try:
+            update_csv_files(url, 'unsafe', 'manual_blacklist')
+            print(f"[DEBUG-URLS] Successfully added to blacklist and updated CSV: {url}")
+        except Exception as e:
+            print(f"[DEBUG-URLS] Error updating CSV files: {e}")
+        
         return True
     print(f"[DEBUG-URLS] URL already in blacklist: {url}")
     return False
