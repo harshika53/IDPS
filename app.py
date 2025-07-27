@@ -136,5 +136,14 @@ def get_blacklist():
     urls = get_blacklisted(redis_config.redis_client)
     return jsonify({"blacklisted_urls": urls}), 200
 
+@app.route('/debug_cache', methods=['GET'])
+def debug_cache():
+    from redis_config import list_cache_contents
+    whitelist, blacklist = list_cache_contents()
+    return jsonify({
+        "whitelist": whitelist,
+        "blacklist": blacklist
+    })
+
 if __name__ == '__main__':
     app.run(debug=True)
