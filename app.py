@@ -131,166 +131,209 @@ def passive_scan():
             log_scan_result(url, {"status": "unsafe", "source": "blacklist"})
             return jsonify({"url": url, "status": "unsafe", "source": "blacklist"}), 200
 
-        print("[DEBUG] 4. URL not in cache, proceeding with full scan...")
+        print("[DEBUG] 4. URL not in cache, proceeding with scan...")
 
-        # Initialize scan results
-        total_risk_score = 0
-        all_reasons = []
-        scan_sources = []
-        scan_successful = False
+        # SIMPLIFIED SCANNING APPROACH
+        risk_score = 0
+        reasons = []
+        scan_methods_tried = []
 
-        # 1. Local pattern scan - ALWAYS ATTEMPT THIS FIRST
-        print("[DEBUG] 5. Running local pattern scan...")
+        # METHOD 1: Basic Pattern Analysis (ALWAYS WORKS)
+        print("[DEBUG] 5. Running basic pattern analysis...")
         try:
-            from scanner import advanced_url_analysis
-            risk_score, reasons = advanced_url_analysis(url)
-            total_risk_score += risk_score
-            all_reasons.extend(reasons)
-            scan_sources.append(f"local_scan(score:{risk_score})")
-            print(f"[DEBUG] Local scan - Risk Score: {risk_score}, Reasons: {reasons}")
-            scan_successful = True
+            suspicious_patterns = [
+                'login', 'signin', 'admin', 'password', 'secure', 'verify', 
+                'account', 'banking', 'paypal', 'update', 'suspended'
+            ]
             
-            # If local scan shows high risk, mark as unsafe immediately
-            if risk_score >= 3:  # Lowered threshold
-                print("[DEBUG] High risk detected by local pattern scan - marking as UNSAFE")
-                add_to_blacklist(url, redis_config.redis_client)
-                log_scan_result(url, {"status": "unsafe", "source": "local_pattern_scan", "risk_score": risk_score, "reasons": reasons})
-                send_alert(f"High-risk pattern in URL: {url} (Score: {risk_score})")
-                return jsonify({
-                    "url": url, 
-                    "status": "unsafe", 
-                    "source": "local_pattern_scan",
-                    "risk_score": risk_score,
-                    "reasons": reasons
-                }), 200
+            malicious_extensions = ['.exe', '.zip', '.rar', '.scr', '.bat', '.cmd', '.vbs']
+            
+            url_lower = url.lower()
+            
+            # Check for suspicious keywords
+            pattern_matches = [p for p in suspicious_patterns if p in url_lower]
+            if pattern_matches:
+                risk_score += len(pattern_matches) * 2
+                reasons.append(f"Suspicious keywords: {', '.join(pattern_matches)}")
+                print(f"[DEBUG] Found suspicious patterns: {pattern_matches}")
+            
+            # Check for malicious file extensions
+            ext_matches = [ext for ext in malicious_extensions if url_lower.endswith(ext)]
+            if ext_matches:
+                risk_score += 5
+                reasons.append(f"Dangerous file extension: {', '.join(ext_matches)}")
+                print(f"[DEBUG] Found dangerous extensions: {ext_matches}")
+            
+            # Check for IP addresses instead of domains
+            import re
+            ip_pattern = r'https?://(?:\d{1,3}\.){3}\d{1,3}'
+            if re.search(ip_pattern, url):
+                risk_score += 3
+                reasons.append("Uses IP address instead of domain")
+                print("[DEBUG] URL uses IP address")
+            
+            # Check for very long URLs (often used in phishing)
+            if len(url) > 100:
+                risk_score += 1
+                reasons.append("Unusually long URL")
+                print(f"[DEBUG] Long URL detected: {len(url)} characters")
+            
+            # Check for non-HTTPS
+            if url.startswith('http://'):
+                risk_score += 1
+                reasons.append("Uses insecure HTTP protocol")
+                print("[DEBUG] Non-HTTPS URL")
+            
+            scan_methods_tried.append(f"pattern_analysis(score:{risk_score})")
+            print(f"[DEBUG] Basic pattern analysis complete. Risk score: {risk_score}")
+            
         except Exception as e:
-            print(f"[DEBUG] Local scan FAILED: {e}")
-            all_reasons.append(f"Local scan error: {str(e)}")
+            print(f"[DEBUG] Pattern analysis failed: {e}")
+            reasons.append(f"Pattern analysis error: {str(e)}")
 
-        # 2. VirusTotal scan - FALLBACK TO BASIC IF VT FAILS
-        print("[DEBUG] 6. Running VirusTotal scan...")
-        virus_total_risk = "low"
+        # METHOD 2: VirusTotal Check (IF AVAILABLE)
+        virus_total_result = "unknown"
+        print("[DEBUG] 6. Attempting VirusTotal check...")
         try:
-            from passive_scanning import check_url_risk
-            virus_total_risk = check_url_risk(url)
-            print(f"[DEBUG] VirusTotal result: '{virus_total_risk}'")
-            if virus_total_risk in ["high", "medium"]:
-                scan_sources.append(f"VirusTotal: {virus_total_risk}")
-                total_risk_score += 3 if virus_total_risk == "high" else 2
-                scan_successful = True
-                print(f"[DEBUG] VirusTotal detected risk: {virus_total_risk}")
+            # Only try VirusTotal if we have an API key
+            if VIRUSTOTAL_API_KEY and VIRUSTOTAL_API_KEY != "5fa54f5b2c07367e5f6796db0a5938ff389b1b69449d6d8deaa5347142051727":
+                virus_total_result = check_url_risk(url)
+                print(f"[DEBUG] VirusTotal result: {virus_total_result}")
+                
+                if virus_total_result == "high":
+                    risk_score += 5
+                    reasons.append("VirusTotal flagged as high risk")
+                    scan_methods_tried.append("virustotal:high")
+                elif virus_total_result == "medium":
+                    risk_score += 2
+                    reasons.append("VirusTotal flagged as medium risk")
+                    scan_methods_tried.append("virustotal:medium")
+                elif virus_total_result == "low":
+                    scan_methods_tried.append("virustotal:clean")
+                else:
+                    scan_methods_tried.append("virustotal:error")
+            else:
+                print("[DEBUG] VirusTotal API key not configured, skipping...")
+                virus_total_result = "skipped"
+                scan_methods_tried.append("virustotal:skipped")
+                
         except Exception as e:
-            print(f"[DEBUG] VirusTotal scan FAILED: {e}")
-            virus_total_risk = "error"
-            all_reasons.append(f"VirusTotal error: {str(e)}")
+            print(f"[DEBUG] VirusTotal check failed: {e}")
+            virus_total_result = "error"
+            scan_methods_tried.append("virustotal:error")
 
-        # 3. Content analysis - TRY BUT DON'T FAIL IF IT DOESN'T WORK
-        print("[DEBUG] 7. Running content analysis...")
-        content_risky = False
-        content_analysis = "No content analysis performed"
+        # METHOD 3: Simple HTTP Request Check
+        print("[DEBUG] 7. Attempting basic HTTP check...")
         try:
-            from scanner import detect_content_anomalies
-            content_risky, content_analysis = detect_content_anomalies(url)
-            print(f"[DEBUG] Content analysis: risky={content_risky}, analysis='{content_analysis}'")
-            if content_risky:
-                scan_sources.append("Content analysis")
-                total_risk_score += 2
-                all_reasons.append(content_analysis)
-                scan_successful = True
+            import requests
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+            
+            response = requests.get(url, headers=headers, timeout=10, allow_redirects=False)
+            print(f"[DEBUG] HTTP response status: {response.status_code}")
+            
+            # Check for suspicious redirects
+            if response.status_code in [301, 302, 303, 307, 308]:
+                location = response.headers.get('Location', '')
+                if location.lower() != url.lower():
+                    risk_score += 1
+                    reasons.append(f"Suspicious redirect to: {location[:50]}...")
+                    print(f"[DEBUG] Redirect detected to: {location}")
+            
+            # Check response headers for security indicators
+            security_headers = ['X-Frame-Options', 'X-XSS-Protection', 'X-Content-Type-Options']
+            missing_headers = [h for h in security_headers if h not in response.headers]
+            if len(missing_headers) > 2:
+                risk_score += 1
+                reasons.append("Missing security headers")
+                print(f"[DEBUG] Missing security headers: {missing_headers}")
+            
+            scan_methods_tried.append("http_check:success")
+            
+        except requests.exceptions.Timeout:
+            print("[DEBUG] HTTP request timed out")
+            reasons.append("Website timeout (suspicious)")
+            risk_score += 1
+            scan_methods_tried.append("http_check:timeout")
+        except requests.exceptions.ConnectionError:
+            print("[DEBUG] HTTP connection failed")
+            reasons.append("Connection failed (site may be down)")
+            risk_score += 2
+            scan_methods_tried.append("http_check:connection_error")
         except Exception as e:
-            print(f"[DEBUG] Content analysis FAILED: {e}")
-            all_reasons.append(f"Content analysis error: {str(e)}")
+            print(f"[DEBUG] HTTP check failed: {e}")
+            scan_methods_tried.append("http_check:error")
 
-        # 4. Basic web scraping scan - TRY BUT DON'T FAIL IF IT DOESN'T WORK
-        print("[DEBUG] 8. Running web scraping scan...")
-        is_risky = False
-        web_scrape_analysis = "No web scraping performed"
-        try:
-            from webscrapping import scrape_and_has_form
-            is_risky, web_scrape_analysis = scrape_and_has_form(url)
-            print(f"[DEBUG] Web scrape result: is_risky={is_risky}, analysis='{web_scrape_analysis}'")
-            if is_risky:
-                scan_sources.append("Form detection")
-                total_risk_score += 1
-                all_reasons.append(web_scrape_analysis)
-                scan_successful = True
-        except Exception as e:
-            print(f"[DEBUG] Web scraping FAILED: {e}")
-            all_reasons.append(f"Web scraping error: {str(e)}")
+        # DECISION MAKING (SIMPLIFIED LOGIC)
+        print(f"[DEBUG] 8. Making decision...")
+        print(f"[DEBUG] Total risk score: {risk_score}")
+        print(f"[DEBUG] Reasons: {reasons}")
+        print(f"[DEBUG] Methods tried: {scan_methods_tried}")
 
-        # ENHANCED DECISION LOGIC - BE MORE PERMISSIVE FOR SAFE URLS
-        print(f"[DEBUG] 9. Making final decision - Total Risk Score: {total_risk_score}")
-        print(f"[DEBUG] Risk factors: {scan_sources}")
-        print(f"[DEBUG] All reasons: {all_reasons}")
-        
-        # If we couldn't perform ANY scans successfully, default to SAFE but with warning
-        if not scan_successful:
-            print("[DEBUG] ALL SCANS FAILED - defaulting to SAFE with warning")
-            add_to_whitelist(url, redis_config.redis_client)
-            log_scan_result(url, {
-                "status": "safe", 
-                "source": "scan_failed_default_safe",
-                "reasons": all_reasons
-            })
-            return jsonify({
-                "url": url, 
-                "status": "safe", 
-                "source": "scan_failed_default_safe",
-                "warning": "Scan methods failed, defaulting to safe",
-                "details": all_reasons[:3]  # Limit details shown
-            }), 200
-
-        # Decision based on multiple factors
-        is_unsafe = (
-            total_risk_score >= 2 or  # Lower threshold
-            virus_total_risk == "high" or  # Only high VT risk
-            (content_risky and total_risk_score >= 1) or  # Content risky + any other factor
-            (is_risky and total_risk_score >= 1)  # Form risky + any other factor
-        )
-        
-        if is_unsafe:
+        # Simple decision threshold
+        if risk_score >= 3:
+            decision = "unsafe"
             print("[DEBUG] DECISION: URL is UNSAFE")
-            add_to_blacklist(url, redis_config.redis_client)
-            send_alert(f"Threat detected: {url} (Risk: {total_risk_score}, Sources: {', '.join(scan_sources)})")
-            log_scan_result(url, {
-                "status": "unsafe", 
-                "source": "scan",
-                "risk_score": total_risk_score,
-                "scan_sources": scan_sources,
-                "reasons": all_reasons
-            })
-            return jsonify({
-                "url": url, 
-                "status": "unsafe", 
-                "source": "scan",
-                "risk_score": total_risk_score,
-                "scan_sources": scan_sources,
-                "reasons": all_reasons[:5]  # Limit reasons shown
-            }), 200
         else:
+            decision = "safe"
             print("[DEBUG] DECISION: URL is SAFE")
+
+        # Update cache and logs
+        if decision == "unsafe":
+            add_to_blacklist(url, redis_config.redis_client)
+            send_alert(f"Threat detected: {url} (Risk score: {risk_score})")
+        else:
             add_to_whitelist(url, redis_config.redis_client)
-            log_scan_result(url, {
-                "status": "safe", 
-                "source": "scan",
-                "risk_score": total_risk_score,
-                "scan_sources": scan_sources
-            })
-            return jsonify({
-                "url": url, 
-                "status": "safe", 
-                "source": "scan",
-                "risk_score": total_risk_score,
-                "scan_sources": scan_sources
-            }), 200
+
+        # Log the result
+        log_scan_result(url, {
+            "status": decision,
+            "source": "scan",
+            "risk_score": risk_score,
+            "reasons": reasons,
+            "methods": scan_methods_tried
+        })
+
+        # Return result
+        return jsonify({
+            "url": url,
+            "status": decision,
+            "source": "scan",
+            "risk_score": risk_score,
+            "reasons": reasons[:3],  # Limit reasons shown
+            "methods_used": scan_methods_tried
+        }), 200
 
     except Exception as e:
         print(f"[DEBUG] CRITICAL ERROR in passive_scan: {e}")
         traceback.print_exc()
-        return jsonify({
-            "error": "Internal server error", 
-            "details": str(e)
-        }), 500
+        
+        # FALLBACK: If everything fails, make a basic decision
+        try:
+            url = data.get('url', '').strip() if data else 'unknown'
+            
+            # Emergency fallback decision
+            if any(word in url.lower() for word in ['login', 'admin', 'password', 'secure']):
+                fallback_decision = "unsafe"
+            else:
+                fallback_decision = "safe"
+            
+            print(f"[DEBUG] FALLBACK DECISION: {fallback_decision}")
+            
+            return jsonify({
+                "url": url,
+                "status": fallback_decision,
+                "source": "fallback",
+                "warning": "Scan failed, using basic pattern matching",
+                "error": str(e)
+            }), 200
+            
+        except:
+            return jsonify({
+                "error": "Complete scan failure",
+                "details": str(e)
+            }), 500
     
 # Other routes for manual list management
 @app.route('/add_to_whitelist', methods=['POST'])
@@ -705,6 +748,130 @@ def compare_cache_vs_csv():
                 "blacklist_in_csv_not_cache": list(csv_blacklist - cache_blacklist)
             }
         }), 200
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+    # Add this test endpoint to your app.py
+
+@app.route('/test_scan_simple', methods=['POST'])
+def test_scan_simple():
+    """
+    Ultra-simple scan test that doesn't depend on external services
+    """
+    try:
+        data = request.get_json()
+        if not data or 'url' not in data:
+            return jsonify({"error": "URL is required"}), 400
+            
+        url = data['url'].strip()
+        print(f"[SIMPLE-SCAN] Testing URL: {url}")
+        
+        # Skip cache entirely for testing
+        risk_score = 0
+        reasons = []
+        
+        # Basic checks that always work
+        url_lower = url.lower()
+        
+        # Check 1: Suspicious keywords
+        bad_words = ['login', 'admin', 'password', 'secure', 'banking', 'paypal']
+        found_words = [word for word in bad_words if word in url_lower]
+        if found_words:
+            risk_score += len(found_words) * 2
+            reasons.append(f"Suspicious words: {', '.join(found_words)}")
+        
+        # Check 2: File extensions
+        if any(url_lower.endswith(ext) for ext in ['.exe', '.zip', '.scr', '.bat']):
+            risk_score += 5
+            reasons.append("Dangerous file extension")
+        
+        # Check 3: Protocol
+        if url.startswith('http://'):
+            risk_score += 1
+            reasons.append("Insecure HTTP")
+        
+        # Check 4: Length
+        if len(url) > 100:
+            risk_score += 1
+            reasons.append("Very long URL")
+        
+        # Decision
+        if risk_score >= 3:
+            status = "unsafe"
+        else:
+            status = "safe"
+        
+        print(f"[SIMPLE-SCAN] Result: {status} (score: {risk_score})")
+        
+        return jsonify({
+            "url": url,
+            "status": status,
+            "risk_score": risk_score,
+            "reasons": reasons,
+            "test_mode": True
+        }), 200
+        
+    except Exception as e:
+        print(f"[SIMPLE-SCAN] Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/scan_debug_info', methods=['GET'])
+def scan_debug_info():
+    """
+    Show debug information about the scanning setup
+    """
+    try:
+        debug_info = {
+            "virustotal_api_configured": bool(VIRUSTOTAL_API_KEY and VIRUSTOTAL_API_KEY != "5fa54f5b2c07367e5f6796db0a5938ff389b1b69449d6d8deaa5347142051727"),
+            "cache_initialized": redis_config.redis_client.initialized,
+            "required_functions_available": {}
+        }
+        
+        # Test if required functions are available
+        functions_to_test = [
+            ("check_url_risk", "passive_scanning"),
+            ("add_to_whitelist", "urls"),
+            ("add_to_blacklist", "urls"),
+            ("log_scan_result", "utility"),
+            ("send_alert", "app")
+        ]
+        
+        for func_name, module_name in functions_to_test:
+            try:
+                if module_name == "app":
+                    # Function is in current module
+                    func_exists = func_name in globals()
+                else:
+                    # Import and check
+                    if module_name == "passive_scanning":
+                        from passive_scanning import check_url_risk
+                        func_exists = True
+                    elif module_name == "urls":
+                        from urls import add_to_whitelist, add_to_blacklist
+                        func_exists = True
+                    elif module_name == "utility":
+                        from utility import log_scan_result
+                        func_exists = True
+                    else:
+                        func_exists = False
+                        
+                debug_info["required_functions_available"][f"{module_name}.{func_name}"] = "✅ Available"
+            except Exception as e:
+                debug_info["required_functions_available"][f"{module_name}.{func_name}"] = f"❌ Error: {str(e)}"
+        
+        # Test basic Python modules
+        modules_to_test = ["requests", "re", "json", "csv", "os"]
+        debug_info["python_modules"] = {}
+        
+        for module in modules_to_test:
+            try:
+                __import__(module)
+                debug_info["python_modules"][module] = "✅ Available"
+            except ImportError as e:
+                debug_info["python_modules"][module] = f"❌ Missing: {str(e)}"
+        
+        return jsonify(debug_info), 200
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500

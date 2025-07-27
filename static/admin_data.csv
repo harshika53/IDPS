@@ -32,3 +32,4 @@ id,url,category,timestamp,status,source
 31,www.google.com,w,2025-07-28 01:45:32,safe,whitelist
 32,quickfacts.census.gov/qfd/maps/iowa_map.html,w,2025-07-28 01:47:01,safe,whitelist
 33,quickfacts.census.gov/qfd/maps/iowa_map.html,w,2025-07-28 01:48:00,safe,whitelist
+34,http://espn.go.com/nba/player/_/id/3457/brandon-rush,b,2025-07-28 01:55:54,unsafe,blacklist
