@@ -1,30 +1,28 @@
 {
   "whitelist": [
-    "https://www.reddit.com/",
     "https://www.truemeds.in/",
-    "https://www.facebook.com",
-    "https://www.eci.gov.in/",
     "https://www.google.com",
-    "https://youtube.com/",
-    "http://www.amazon.com",
+    "https://www.reddit.com/",
     "https://www.makemytrip.com/",
     "https://brainly.in/",
-    "https://discord.com/",
-  
+    "https://www.facebook.com",
+    "https://www.eci.gov.in/",
+    "http://www.amazon.com",
+    "https://youtube.com/",
+    "https://discord.com/"
   ],
   "blacklist": [
-    "http://adventure-nicaragua.net/index.php?option=com_mailto&tmpl=component&link=aHR0cDovL2FkdmVudHVyZ...",
+    "bopsecrets.org/rexroth/cr/1.htm",
+    "http://allmusic.com/album/crazy-from-the-heat-r16990",
     "http://larcadelcarnevale.com/catalogo/palloncini",
     "http://yourbittorrent.com/?q=anthony-hamilton-soulife",
-    "http://www.szabadmunkaero.hu/cimoldal.html?start=12",
-    "http://mp3raid.com/music/krizz_kaliko.html",
-    "escholarship.org/uc/item/5xt4952c",
-    "http://www.ikenmijnkunst.nl/index.php/exposities/exposities-2006",
-    "http://www.lebensmittel-ueberwachung.de/index.php/aktuelles.1",
-    "http://allmusic.com/album/crazy-from-the-heat-r16990",
-    "bopsecrets.org/rexroth/cr/1.htm",
     "http://www.pashminaonline.com/pure-pashminas",
-    "http://espn.go.com/nba/player/_/id/3457/brandon-rush"
+    "http://www.ikenmijnkunst.nl/index.php/exposities/exposities-2006",
+    "http://espn.go.com/nba/player/_/id/3457/brandon-rush",
+    "http://adventure-nicaragua.net/index.php?option=com_mailto&tmpl=component&link=aHR0cDovL2FkdmVudHVyZ...",
+    "http://www.szabadmunkaero.hu/cimoldal.html?start=12",
+    "http://www.lebensmittel-ueberwachung.de/index.php/aktuelles.1",
+    "http://mp3raid.com/music/krizz_kaliko.html"
   ],
-  "last_updated": "2025-07-28T02:19:23.021217"
+  "last_updated": "2025-07-28T02:26:03.151778"
 }
