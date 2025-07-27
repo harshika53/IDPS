@@ -4,7 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # Initialize Redis connection
-cache = redis.StrictRedis(host='localhost', port=6379, db=0)
+cache = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
 
 # Set up the database connection and ORM
 Base = declarative_base()
@@ -21,27 +21,41 @@ Base.metadata.create_all(engine)
 
 def add_to_whitelist(url, cache):
     """Adds the URL to the whitelist"""
+    print(f"[DEBUG-URLS] Adding to whitelist: {url}")
     if not cache.sismember('whitelist', url):
         cache.sadd('whitelist', url)
+        # Remove from blacklist if it exists there
+        cache.srem('blacklist', url)
         save_url_to_db(url, is_blacklisted=False)
+        print(f"[DEBUG-URLS] Successfully added to whitelist: {url}")
         return True
+    print(f"[DEBUG-URLS] URL already in whitelist: {url}")
     return False
 
 def add_to_blacklist(url, cache):
     """Adds the URL to the blacklist"""
+    print(f"[DEBUG-URLS] Adding to blacklist: {url}")
     if not cache.sismember('blacklist', url):
         cache.sadd('blacklist', url)
+        # Remove from whitelist if it exists there
+        cache.srem('whitelist', url)
         save_url_to_db(url, is_blacklisted=True)
+        print(f"[DEBUG-URLS] Successfully added to blacklist: {url}")
         return True
+    print(f"[DEBUG-URLS] URL already in blacklist: {url}")
     return False
 
 def get_whitelisted(cache):
     """Fetches all whitelisted URLs"""
-    return list(cache.smembers('whitelist'))
+    urls = list(cache.smembers('whitelist'))
+    print(f"[DEBUG-URLS] Retrieved {len(urls)} whitelisted URLs")
+    return urls
 
 def get_blacklisted(cache):
     """Fetches all blacklisted URLs"""
-    return list(cache.smembers('blacklist'))
+    urls = list(cache.smembers('blacklist'))
+    print(f"[DEBUG-URLS] Retrieved {len(urls)} blacklisted URLs")
+    return urls
 
 def save_url_to_db(url, is_blacklisted=False):
     """Saves URL to the database"""
@@ -52,11 +66,13 @@ def save_url_to_db(url, is_blacklisted=False):
           new_url = URL(url=url, is_blacklisted='true' if is_blacklisted else 'false')
           session.add(new_url)
           session.commit()
+          print(f"[DEBUG-URLS] Saved new URL to DB: {url}")
           return True
         elif existing_url.is_blacklisted != str(is_blacklisted).lower():
             existing_url.is_blacklisted = 'true' if is_blacklisted else 'false'
             session.commit()
+            print(f"[DEBUG-URLS] Updated URL in DB: {url}")
             return True
         return False
     finally:
-        session.close()  
+        session.close()
