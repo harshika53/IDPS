@@ -631,6 +631,84 @@ def test_imports():
         "summary": "All imports successful" if all("Success" in result for result in import_results.values()) else "Some imports failed"
     }), 200
 
+# Add this endpoint to your app.py
+
+@app.route('/reload_cache_from_csv', methods=['POST'])
+def reload_cache_from_csv():
+    """Force reload cache from CSV files - prioritizes individual CSV files"""
+    try:
+        redis_config.redis_client.force_reload_from_csv()
+        send_alert("Cache reloaded from CSV files")
+        
+        # Get the updated counts
+        whitelist_count = len(redis_config.redis_client.smembers('whitelist'))
+        blacklist_count = len(redis_config.redis_client.smembers('blacklist'))
+        
+        return jsonify({
+            "message": "Cache reloaded successfully from CSV files",
+            "whitelist_count": whitelist_count,
+            "blacklist_count": blacklist_count,
+            "source": "individual_csv_files"
+        }), 200
+    except Exception as e:
+        print(f"[DEBUG] Error reloading cache from CSV: {e}")
+        return jsonify({"error": "Failed to reload cache from CSV files"}), 500
+
+@app.route('/compare_cache_vs_csv', methods=['GET'])
+def compare_cache_vs_csv():
+    """Compare what's in cache vs what's in CSV files"""
+    try:
+        import csv
+        
+        # Get current cache contents
+        cache_whitelist = set(redis_config.redis_client.smembers('whitelist'))
+        cache_blacklist = set(redis_config.redis_client.smembers('blacklist'))
+        
+        # Read CSV files
+        csv_whitelist = set()
+        csv_blacklist = set()
+        
+        # Read whitelist.csv
+        whitelist_file = os.path.join(app.config.get('STATIC_FOLDER'), 'whitelist.csv')
+        if os.path.exists(whitelist_file):
+            with open(whitelist_file, 'r', newline='', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    csv_whitelist.add(row['url'].strip())
+        
+        # Read blacklist.csv
+        blacklist_file = os.path.join(app.config.get('STATIC_FOLDER'), 'blacklist.csv')
+        if os.path.exists(blacklist_file):
+            with open(blacklist_file, 'r', newline='', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    csv_blacklist.add(row['url'].strip())
+        
+        # Compare
+        return jsonify({
+            "cache": {
+                "whitelist_count": len(cache_whitelist),
+                "blacklist_count": len(cache_blacklist),
+                "whitelist_sample": list(cache_whitelist)[:5],
+                "blacklist_sample": list(cache_blacklist)[:5]
+            },
+            "csv_files": {
+                "whitelist_count": len(csv_whitelist),
+                "blacklist_count": len(csv_blacklist),
+                "whitelist_sample": list(csv_whitelist)[:5],
+                "blacklist_sample": list(csv_blacklist)[:5]
+            },
+            "differences": {
+                "whitelist_in_cache_not_csv": list(cache_whitelist - csv_whitelist),
+                "whitelist_in_csv_not_cache": list(csv_whitelist - cache_whitelist),
+                "blacklist_in_cache_not_csv": list(cache_blacklist - csv_blacklist),
+                "blacklist_in_csv_not_cache": list(csv_blacklist - cache_blacklist)
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
     print("🚀 Starting IDPS application...")
     print("✅ Cache will auto-initialize on startup")

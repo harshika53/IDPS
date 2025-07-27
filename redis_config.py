@@ -1,4 +1,4 @@
-# redis_config.py - Fixed In-Memory Version
+# redis_config.py - Updated to prioritize individual CSV files
 import json
 import os
 import csv
@@ -17,23 +17,100 @@ class InMemoryCache:
         print("[CACHE] InMemoryCache instance created")
     
     def _initialize(self):
-        """Initialize cache on startup"""
+        """Initialize cache on startup - PRIORITIZE individual CSV files"""
         if not self.initialized:
             print("[CACHE] Initializing cache...")
-            self.load_from_file()
-            self.load_from_csv()
+            
+            # First try to load from individual CSV files (PRIORITY)
+            whitelist_loaded = self.load_from_individual_csvs()
+            
+            # If individual CSVs don't exist or are empty, fall back to admin_data.csv
+            if not whitelist_loaded:
+                print("[CACHE] Individual CSV files not found, loading from admin_data.csv...")
+                self.load_from_admin_csv()
+            
+            # Finally, try to load from backup file if nothing else worked
+            if len(self.data['whitelist']) == 0 and len(self.data['blacklist']) == 0:
+                print("[CACHE] No data found in CSV files, trying backup file...")
+                self.load_from_file()
+            
             self.initialized = True
             print(f"[CACHE] Cache initialized - Whitelist: {len(self.data['whitelist'])}, Blacklist: {len(self.data['blacklist'])}")
             self._debug_cache_contents()
     
+    def load_from_individual_csvs(self):
+        """Load cache from individual whitelist.csv and blacklist.csv files (PRIORITY METHOD)"""
+        whitelist_file = os.path.join('static', 'whitelist.csv')
+        blacklist_file = os.path.join('static', 'blacklist.csv')
+        
+        data_loaded = False
+        
+        # Load whitelist.csv
+        if os.path.exists(whitelist_file):
+            try:
+                with open(whitelist_file, 'r', newline='', encoding='utf-8') as f:
+                    reader = csv.DictReader(f)
+                    whitelist_count = 0
+                    for row in reader:
+                        url = row['url'].strip()
+                        if url:  # Only add non-empty URLs
+                            self.data['whitelist'].add(url)
+                            whitelist_count += 1
+                    print(f"[CACHE] Loaded {whitelist_count} URLs from whitelist.csv")
+                    data_loaded = True
+            except Exception as e:
+                print(f"[CACHE] Error loading whitelist.csv: {e}")
+        else:
+            print("[CACHE] whitelist.csv not found")
+        
+        # Load blacklist.csv
+        if os.path.exists(blacklist_file):
+            try:
+                with open(blacklist_file, 'r', newline='', encoding='utf-8') as f:
+                    reader = csv.DictReader(f)
+                    blacklist_count = 0
+                    for row in reader:
+                        url = row['url'].strip()
+                        if url:  # Only add non-empty URLs
+                            self.data['blacklist'].add(url)
+                            blacklist_count += 1
+                    print(f"[CACHE] Loaded {blacklist_count} URLs from blacklist.csv")
+                    data_loaded = True
+            except Exception as e:
+                print(f"[CACHE] Error loading blacklist.csv: {e}")
+        else:
+            print("[CACHE] blacklist.csv not found")
+        
+        return data_loaded
+    
+    def load_from_admin_csv(self):
+        """Load from admin_data.csv (FALLBACK METHOD)"""
+        admin_file = os.path.join('static', 'admin_data.csv')
+        if os.path.exists(admin_file):
+            try:
+                with open(admin_file, 'r', newline='', encoding='utf-8') as f:
+                    reader = csv.DictReader(f)
+                    for row in reader:
+                        url = row['url'].strip()
+                        category = row.get('category', '').strip()
+                        if category == 'w':
+                            self.data['whitelist'].add(url)
+                        elif category == 'b':
+                            self.data['blacklist'].add(url)
+                print(f"[CACHE] Loaded from admin_data.csv as fallback")
+            except Exception as e:
+                print(f"[CACHE] Error loading admin_data.csv: {e}")
+    
     def _debug_cache_contents(self):
         """Debug function to show what's in cache"""
         print(f"[CACHE-DEBUG] Current cache contents:")
-        print(f"[CACHE-DEBUG] Whitelist ({len(self.data['whitelist'])}): {list(self.data['whitelist'])[:5]}...")
-        print(f"[CACHE-DEBUG] Blacklist ({len(self.data['blacklist'])}): {list(self.data['blacklist'])[:5]}...")
+        whitelist_sample = list(self.data['whitelist'])[:5]
+        blacklist_sample = list(self.data['blacklist'])[:5]
+        print(f"[CACHE-DEBUG] Whitelist ({len(self.data['whitelist'])}): {whitelist_sample}...")
+        print(f"[CACHE-DEBUG] Blacklist ({len(self.data['blacklist'])}): {blacklist_sample}...")
     
     def load_from_file(self):
-        """Load cache from backup file if it exists"""
+        """Load cache from backup file if it exists (LAST RESORT)"""
         try:
             if os.path.exists(self.cache_file):
                 with open(self.cache_file, 'r') as f:
@@ -43,28 +120,6 @@ class InMemoryCache:
                 print(f"[CACHE] Loaded cache from {self.cache_file}")
         except Exception as e:
             print(f"[CACHE] Error loading cache file: {e}")
-    
-    def load_from_csv(self):
-        """Load initial data from CSV files"""
-        try:
-            # Load from admin_data.csv (primary source)
-            admin_file = os.path.join('static', 'admin_data.csv')
-            if os.path.exists(admin_file):
-                with open(admin_file, 'r', newline='', encoding='utf-8') as f:
-                    reader = csv.DictReader(f)
-                    for row in reader:
-                        url = row['url'].strip()
-                        category = row.get('category', '').strip()
-                        if category == 'w':
-                            self.data['whitelist'].add(url)
-                            print(f"[CACHE] Added to whitelist from CSV: {url}")
-                        elif category == 'b':
-                            self.data['blacklist'].add(url)
-                            print(f"[CACHE] Added to blacklist from CSV: {url}")
-                print(f"[CACHE] Loaded from admin_data.csv - W:{len([r for r in csv.DictReader(open(admin_file)) if r.get('category')=='w'])}, B:{len([r for r in csv.DictReader(open(admin_file)) if r.get('category')=='b'])}")
-                
-        except Exception as e:
-            print(f"[CACHE] Error loading CSV files: {e}")
     
     def save_to_file(self):
         """Save cache to backup file"""
@@ -123,20 +178,14 @@ class InMemoryCache:
                 return True
         
         print(f"[CACHE-LOOKUP] NO MATCH found in {key} for: {original_value}")
-        
-        # Debug: show what's actually in the cache
-        cache_contents = list(self.data.get(key, set()))[:3]  # Show first 3 items
-        print(f"[CACHE-LOOKUP] {key} contains: {cache_contents}...")
-        
         return False
     
     def sadd(self, key, value):
-        """Add value to set - SIMPLIFIED VERSION"""
+        """Add value to set"""
         self._initialize()  # Ensure initialized
         if key not in self.data:
             self.data[key] = set()
         
-        # Only add the exact value provided, no normalization
         original_value = value.strip()
         self.data[key].add(original_value)
         
@@ -196,6 +245,14 @@ class InMemoryCache:
                 print(f"[CACHE-DELETE] Cleared {count} items from {key}")
         self.save_to_file()
         return True
+    
+    def force_reload_from_csv(self):
+        """Force reload data from CSV files - useful for manual refresh"""
+        print("[CACHE] Force reloading from CSV files...")
+        self.data = {'whitelist': set(), 'blacklist': set()}
+        self.initialized = False
+        self._initialize()
+        return True
 
 # Create the cache instance (will auto-initialize)
 redis_client = InMemoryCache()
@@ -231,6 +288,14 @@ def clear_all_cache():
         print("[DEBUG-CACHE] Cleared all cache")
     except Exception as e:
         print(f"[DEBUG-CACHE] Error clearing cache: {e}")
+
+def reload_cache_from_csv():
+    """Reload cache from CSV files"""
+    try:
+        redis_client.force_reload_from_csv()
+        print("[DEBUG-CACHE] Reloaded cache from CSV files")
+    except Exception as e:
+        print(f"[DEBUG-CACHE] Error reloading cache: {e}")
 
 def list_cache_contents():
     """Debug function to list all cached URLs"""
