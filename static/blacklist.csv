@@ -11,3 +11,4 @@ id,url,category,timestamp,status,source
 10,bopsecrets.org/rexroth/cr/1.htm,b,2025-07-27 16:55:37,unsafe,blacklist
 11,http://www.lebensmittel-ueberwachung.de/index.php/aktuelles.1,b,2025-07-27 16:56:23,unsafe,blacklist
 12,http://larcadelcarnevale.com/catalogo/palloncini,b,2025-07-27 16:57:15,unsafe,scan
+13,http://adventure-nicaragua.net/index.php?option=com_mailto&tmpl=component&link=aHR0cDovL2FkdmVudHVyZ...,b,2025-07-28 01:41:44,unsafe,scan
