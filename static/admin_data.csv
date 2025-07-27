@@ -48,3 +48,5 @@ id,url,category,timestamp,status,source
 47,http://larcadelcarnevale.com/catalogo/palloncini,b,2025-07-28 02:53:11,unsafe,blacklist
 48,http://www.vnic.co/khach-hang.html,b,2025-07-28 02:53:42,unsafe,manual_blacklist
 49,http://www.vnic.co/khach-hang.html,b,2025-07-28 02:53:42,unsafe,scan
+50,www.google.com,w,2025-07-28 02:57:20,safe,whitelist
+51,www.google.com,w,2025-07-28 03:00:14,safe,whitelist

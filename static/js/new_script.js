@@ -12,9 +12,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const views = document.querySelectorAll('.view');
     const mainTitle = document.getElementById('main-title');
 
-    // --- Chart.js Setup ---
+    // --- Chart.js Setup with Unique URL Tracking ---
     let scanChart;
     let chartData = { safe: 0, unsafe: 0 };
+    let scannedUrls = new Set(); // Track unique URLs that have been scanned
+    let urlStatusMap = new Map(); // Track the most recent status of each URL
     const chartCtx = document.getElementById('scan-chart').getContext('2d');
 
     function initializeChart() {
@@ -23,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
             data: {
                 labels: ['Safe URLs', 'Unsafe URLs'],
                 datasets: [{
-                    label: 'Scan Results',
+                    label: 'Unique Scan Results',
                     data: [chartData.safe, chartData.unsafe],
                     backgroundColor: ['#28a745', '#dc3545'],
                     borderColor: ['#252831'],
@@ -40,6 +42,12 @@ document.addEventListener('DOMContentLoaded', function () {
                             color: '#e0e0e0',
                             font: { size: 14 }
                         }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Unique URLs Scanned: 0',
+                        color: '#e0e0e0',
+                        font: { size: 16, weight: 'bold' }
                     }
                 },
                 cutout: '70%'
@@ -47,11 +55,107 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    function updateChart(status) {
-        if (status === 'safe') chartData.safe++;
-        else if (status === 'unsafe') chartData.unsafe++;
+    // UPDATED: Only count unique URLs and handle status changes
+    function updateChart(url, status) {
+        const normalizedUrl = normalizeUrl(url);
+        const previousStatus = urlStatusMap.get(normalizedUrl);
+        
+        // If this is a new URL
+        if (!scannedUrls.has(normalizedUrl)) {
+            scannedUrls.add(normalizedUrl);
+            urlStatusMap.set(normalizedUrl, status);
+            
+            if (status === 'safe') chartData.safe++;
+            else if (status === 'unsafe') chartData.unsafe++;
+            
+            console.log(`New unique URL added: ${normalizedUrl} (${status})`);
+        } 
+        // If URL exists but status changed
+        else if (previousStatus !== status) {
+            // Remove from previous status count
+            if (previousStatus === 'safe') chartData.safe--;
+            else if (previousStatus === 'unsafe') chartData.unsafe--;
+            
+            // Add to new status count
+            if (status === 'safe') chartData.safe++;
+            else if (status === 'unsafe') chartData.unsafe++;
+            
+            urlStatusMap.set(normalizedUrl, status);
+            console.log(`URL status changed: ${normalizedUrl} (${previousStatus} → ${status})`);
+        } else {
+            console.log(`URL already counted: ${normalizedUrl} (${status})`);
+            return; // No update needed
+        }
+        
+        // Update chart
         scanChart.data.datasets[0].data = [chartData.safe, chartData.unsafe];
+        scanChart.options.plugins.title.text = `Unique URLs Scanned: ${scannedUrls.size}`;
         scanChart.update();
+    }
+
+    // Helper function to normalize URLs for comparison
+    function normalizeUrl(url) {
+        try {
+            // Remove common variations
+            let normalized = url.toLowerCase().trim();
+            
+            // Add protocol if missing
+            if (!normalized.startsWith('http://') && !normalized.startsWith('https://')) {
+                normalized = 'https://' + normalized;
+            }
+            
+            // Remove trailing slash
+            normalized = normalized.replace(/\/$/, '');
+            
+            // Remove www. for comparison
+            normalized = normalized.replace(/^(https?:\/\/)www\./, '$1');
+            
+            return normalized;
+        } catch (error) {
+            return url.toLowerCase().trim();
+        }
+    }
+
+    // NEW: Initialize chart with unique URLs from existing data
+    async function initializeChartData() {
+        try {
+            const response = await fetch('/get_logs');
+            if (response.ok) {
+                const logs = await response.json();
+                
+                // Process logs to get unique URLs with their most recent status
+                const urlHistory = new Map();
+                
+                // Sort logs by timestamp to get chronological order
+                logs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                
+                logs.forEach(log => {
+                    const normalizedUrl = normalizeUrl(log.url);
+                    urlHistory.set(normalizedUrl, log.status);
+                });
+                
+                // Count unique URLs by their final status
+                urlHistory.forEach((status, url) => {
+                    scannedUrls.add(url);
+                    urlStatusMap.set(url, status);
+                    
+                    if (status === 'safe') {
+                        chartData.safe++;
+                    } else if (status === 'unsafe') {
+                        chartData.unsafe++;
+                    }
+                });
+                
+                // Update the chart with initial data
+                scanChart.data.datasets[0].data = [chartData.safe, chartData.unsafe];
+                scanChart.options.plugins.title.text = `Unique URLs Scanned: ${scannedUrls.size}`;
+                scanChart.update();
+                
+                console.log(`Chart initialized with ${scannedUrls.size} unique URLs (${chartData.safe} safe, ${chartData.unsafe} unsafe)`);
+            }
+        } catch (error) {
+            console.error('Error initializing chart data:', error);
+        }
     }
 
     // --- Navigation Logic ---
@@ -104,10 +208,11 @@ document.addEventListener('DOMContentLoaded', function () {
         scanStatusEl.className = result.status;
         showToast(`URL is ${result.status}. Source: ${result.source}`, result.status);
         
-        if (result.source === 'scan') {
-            updateChart(result.status);
-            fetchNotifications(); // Refresh notifications after a scan
-        }
+        // UPDATED: Update chart with unique URL tracking
+        updateChart(result.url, result.status);
+        
+        // Always refresh notifications after any scan
+        fetchNotifications();
         
         fetchLists();
         fetchLogs(); // Refresh all logs to show the new entry
@@ -223,7 +328,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // --- Initial Data Load ---
     initializeChart();
-    fetchLists();
-    fetchLogs();
-    fetchNotifications();
+    
+    // UPDATED: Initialize chart with unique URLs, then load other data
+    initializeChartData().then(() => {
+        fetchLists();
+        fetchLogs();
+        fetchNotifications();
+    });
 });
