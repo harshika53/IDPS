@@ -1,10 +1,6 @@
-import redis  # Correct import of redis
 from sqlalchemy import create_engine, Column, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-
-# Initialize Redis connection
-cache = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
 
 # Set up the database connection and ORM
 Base = declarative_base()
@@ -47,13 +43,13 @@ def add_to_blacklist(url, cache):
 
 def get_whitelisted(cache):
     """Fetches all whitelisted URLs"""
-    urls = list(cache.smembers('whitelist'))
+    urls = cache.smembers('whitelist')
     print(f"[DEBUG-URLS] Retrieved {len(urls)} whitelisted URLs")
     return urls
 
 def get_blacklisted(cache):
     """Fetches all blacklisted URLs"""
-    urls = list(cache.smembers('blacklist'))
+    urls = cache.smembers('blacklist')
     print(f"[DEBUG-URLS] Retrieved {len(urls)} blacklisted URLs")
     return urls
 
