@@ -387,6 +387,88 @@ def health_check():
             "status": "unhealthy",
             "error": str(e)
         }), 500
+    # Add these routes to your existing app.py file
+
+@app.route('/sync_csv_files', methods=['POST'])
+def sync_csv_files():
+    """
+    Manual CSV synchronization endpoint
+    Useful for testing or fixing inconsistencies
+    """
+    try:
+        from utility import sync_all_csv_files
+        sync_all_csv_files()
+        send_alert("CSV files synchronized manually")
+        return jsonify({"message": "CSV files synchronized successfully"}), 200
+    except Exception as e:
+        print(f"[DEBUG] Error syncing CSV files: {e}")
+        return jsonify({"error": "Failed to synchronize CSV files"}), 500
+
+@app.route('/csv_status', methods=['GET'])
+def csv_status():
+    """
+    Check the status of all CSV files
+    """
+    try:
+        import csv
+        
+        files_status = {}
+        csv_files = ['admin_data.csv', 'whitelist.csv', 'blacklist.csv']
+        
+        for filename in csv_files:
+            file_path = os.path.join(app.config.get('STATIC_FOLDER'), filename)
+            if os.path.exists(file_path):
+                try:
+                    with open(file_path, 'r', newline='', encoding='utf-8') as csvfile:
+                        reader = csv.DictReader(csvfile)
+                        count = sum(1 for row in reader)
+                        files_status[filename] = {
+                            "exists": True,
+                            "count": count,
+                            "last_modified": os.path.getmtime(file_path)
+                        }
+                except Exception as e:
+                    files_status[filename] = {
+                        "exists": True,
+                        "error": str(e)
+                    }
+            else:
+                files_status[filename] = {"exists": False}
+        
+        return jsonify({
+            "status": "success",
+            "files": files_status
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "error": str(e)
+        }), 500
+
+@app.route('/test_csv_update', methods=['POST'])
+def test_csv_update():
+    """
+    Test endpoint to verify CSV updating functionality
+    """
+    try:
+        data = request.get_json()
+        test_url = data.get('url', 'https://test-example.com')
+        test_status = data.get('status', 'safe')  # 'safe' or 'unsafe'
+        
+        # Test the CSV update functionality
+        from utility import update_csv_files
+        update_csv_files(test_url, test_status, 'test')
+        
+        return jsonify({
+            "message": f"Test completed - {test_url} marked as {test_status}",
+            "url": test_url,
+            "status": test_status
+        }), 200
+        
+    except Exception as e:
+        print(f"[DEBUG] Error in test_csv_update: {e}")
+        return jsonify({"error": "Test failed"}), 500
 
 if __name__ == '__main__':
     print("🚀 Starting IDPS application...")
