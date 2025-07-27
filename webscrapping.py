@@ -47,7 +47,8 @@ def scrape_and_has_form(url):
     if not html:
         return False, "Could not fetch page content"
         
-    soup = BeautifulSoup(html, 'parser')
+    # Fix: Use 'html.parser' instead of 'parser'
+    soup = BeautifulSoup(html, 'html.parser')
     forms = soup.find_all('form')
     
     if len(forms) > 0:
