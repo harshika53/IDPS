@@ -1,21 +1,19 @@
-"id","url","category"
-1,"www.google.com","w"
-2,"www.facebook.com","w"
-3,"http://mp3raid.com/music/krizz_kaliko.html","b"
-4,"bopsecrets.org/rexroth/cr/1.htm","b"
-5,"http://espn.go.com/nba/player/_/id/3457/brandon-rush","b"
-6,"http://yourbittorrent.com/?q=anthony-hamilton-soulife","b"
-7,"http://www.pashminaonline.com/pure-pashminas","b"
-8,"http://allmusic.com/album/crazy-from-the-heat-r16990","b"
-9,"http://www.ikenmijnkunst.nl/index.php/exposities/exposities-2006","b"
-10,"ueberwachung.de/index.php/aktuelles.1
-http://www.szabadmunkaero.hu/cimoldal.html?start=12","b"
-12,"https://www.eci.gov.in/","w"
-13,"https://www.truemeds.in/","w"
-14,"https://www.makemytrip.com/","w"
-15,"https://www.reddit.com/","w"
-11,"http://www.szabadmunkaero.hu/cimoldal.html?start=12","b"
-19,"https://youtube.com/","w"
-18,"http://www.amazon.com","w"
-17,"https://discord.com/","w"
-16,"https://brainly.in/","w"
+id,url,category,timestamp,status,source
+1,https://www.google.com,w,2025-01-15 10:00:00,safe,manual
+2,https://www.facebook.com,w,2025-01-15 10:01:00,safe,manual
+3,http://mp3raid.com/music/krizz_kaliko.html,b,2025-01-15 10:02:00,unsafe,manual
+4,bopsecrets.org/rexroth/cr/1.htm,b,2025-01-15 10:03:00,unsafe,manual
+5,http://espn.go.com/nba/player/_/id/3457/brandon-rush,b,2025-01-15 10:04:00,unsafe,manual
+6,http://yourbittorrent.com/?q=anthony-hamilton-soulife,b,2025-01-15 10:05:00,unsafe,manual
+7,http://www.pashminaonline.com/pure-pashminas,b,2025-01-15 10:06:00,unsafe,manual
+8,http://allmusic.com/album/crazy-from-the-heat-r16990,b,2025-01-15 10:07:00,unsafe,manual
+9,http://www.ikenmijnkunst.nl/index.php/exposities/exposities-2006,b,2025-01-15 10:08:00,unsafe,manual
+10,http://www.szabadmunkaero.hu/cimoldal.html?start=12,b,2025-01-15 10:09:00,unsafe,manual
+11,https://www.eci.gov.in/,w,2025-01-15 10:10:00,safe,manual
+12,https://www.truemeds.in/,w,2025-01-15 10:11:00,safe,manual
+13,https://www.makemytrip.com/,w,2025-01-15 10:12:00,safe,manual
+14,https://www.reddit.com/,w,2025-01-15 10:13:00,safe,manual
+15,https://brainly.in/,w,2025-01-15 10:14:00,safe,manual
+16,https://youtube.com/,w,2025-01-15 10:15:00,safe,manual
+17,https://discord.com/,w,2025-01-15 10:16:00,safe,manual
+18,http://www.amazon.com,w,2025-01-15 10:17:00,safe,manual

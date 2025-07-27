@@ -1,11 +1,11 @@
-id,url,category
-1,https://www.google.com,w
-2,https://www.facebook.com,w
-3,https://www.amazon.com,w
-4,https://www.truemeds.in/,w
-5,https://www.makemytrip.com/,w
-6,https://www.reddit.com/,w
-7,https://brainly.in/,w
-8,https://youtube.com,w
-9,https://www.eci.gov.in/,w
-10,https://discord.com/,w
+id,url,category,timestamp,status,source
+1,https://www.google.com,w,2025-01-15 10:00:00,safe,manual
+2,https://www.facebook.com,w,2025-01-15 10:01:00,safe,manual
+3,https://www.eci.gov.in/,w,2025-01-15 10:10:00,safe,manual
+4,https://www.truemeds.in/,w,2025-01-15 10:11:00,safe,manual
+5,https://www.makemytrip.com/,w,2025-01-15 10:12:00,safe,manual
+6,https://www.reddit.com/,w,2025-01-15 10:13:00,safe,manual
+7,https://brainly.in/,w,2025-01-15 10:14:00,safe,manual
+8,https://youtube.com/,w,2025-01-15 10:15:00,safe,manual
+9,https://discord.com/,w,2025-01-15 10:16:00,safe,manual
+10,http://www.amazon.com,w,2025-01-15 10:17:00,safe,manual
