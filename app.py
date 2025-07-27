@@ -13,7 +13,7 @@ import redis_config
 from urls import add_to_whitelist, add_to_blacklist, get_whitelisted, get_blacklisted
 from passive_scanning import check_url_risk
 from webscrapping import scrape_and_has_form
-from scanner import advanced_url_analysis
+from scanner import advanced_url_analysis, detect_content_anomalies
 from utility import log_scan_result
 
 # Initialize Flask app
@@ -42,8 +42,8 @@ def debug_redis():
             "redis_status": "connected",
             "whitelist_count": len(whitelist),
             "blacklist_count": len(blacklist),
-            "whitelist": whitelist,
-            "blacklist": blacklist
+            "whitelist": whitelist[:10],  # Show first 10
+            "blacklist": blacklist[:10]   # Show first 10
         })
     except Exception as e:
         return jsonify({
@@ -51,35 +51,6 @@ def debug_redis():
             "error": str(e),
             "traceback": traceback.format_exc()
         }), 500
-
-@app.route('/debug_modules', methods=['GET'])
-def debug_modules():
-    """Test if all modules are working"""
-    results = {}
-    
-    # Test VirusTotal
-    try:
-        from passive_scanning import VIRUSTOTAL_API_KEY
-        results["virustotal_key"] = "present" if VIRUSTOTAL_API_KEY else "missing"
-    except Exception as e:
-        results["virustotal_error"] = str(e)
-    
-    # Test web scraping
-    try:
-        from webscrapping import get_dynamic_page_content
-        results["webscraping"] = "module_loaded"
-    except Exception as e:
-        results["webscraping_error"] = str(e)
-    
-    # Test scanner
-    try:
-        from scanner import advanced_url_analysis
-        test_score, test_reasons = advanced_url_analysis("http://test.com")
-        results["scanner"] = f"working (score: {test_score})"
-    except Exception as e:
-        results["scanner_error"] = str(e)
-    
-    return jsonify(results)
 
 # --- App Routes ---
 
@@ -131,102 +102,147 @@ def passive_scan():
         url = data['url'].strip()
         print(f"[DEBUG] 1. Processing URL: '{url}'")
 
-        # Test Redis connection first
-        try:
-            redis_config.redis_client.ping()
-            print("[DEBUG] Redis connection: OK")
-        except Exception as e:
-            print(f"[DEBUG] Redis connection FAILED: {e}")
-            return jsonify({"error": "Redis connection failed", "details": str(e)}), 500
-
-        # Check whitelist
+        # Check whitelist first
         print("[DEBUG] 2. Checking whitelist...")
-        try:
-            is_whitelisted = redis_config.redis_client.sismember('whitelist', url)
-            print(f"[DEBUG] Whitelist check result: {is_whitelisted}")
-            
-            if is_whitelisted:
-                print(f"[DEBUG] URL found in whitelist: {url}")
-                log_scan_result(url, {"status": "safe", "source": "whitelist"})
-                return jsonify({"url": url, "status": "safe", "source": "whitelist"}), 200
-        except Exception as e:
-            print(f"[DEBUG] Whitelist check FAILED: {e}")
-            traceback.print_exc()
+        if redis_config.redis_client.sismember('whitelist', url):
+            print(f"[DEBUG] URL found in whitelist: {url}")
+            log_scan_result(url, {"status": "safe", "source": "whitelist"})
+            return jsonify({"url": url, "status": "safe", "source": "whitelist"}), 200
 
         # Check blacklist
         print("[DEBUG] 3. Checking blacklist...")
-        try:
-            is_blacklisted = redis_config.redis_client.sismember('blacklist', url)
-            print(f"[DEBUG] Blacklist check result: {is_blacklisted}")
-            
-            if is_blacklisted:
-                print(f"[DEBUG] URL found in blacklist: {url}")
-                log_scan_result(url, {"status": "unsafe", "source": "blacklist"})
-                return jsonify({"url": url, "status": "unsafe", "source": "blacklist"}), 200
-        except Exception as e:
-            print(f"[DEBUG] Blacklist check FAILED: {e}")
-            traceback.print_exc()
+        if redis_config.redis_client.sismember('blacklist', url):
+            print(f"[DEBUG] URL found in blacklist: {url}")
+            log_scan_result(url, {"status": "unsafe", "source": "blacklist"})
+            return jsonify({"url": url, "status": "unsafe", "source": "blacklist"}), 200
 
         print("[DEBUG] 4. URL not in cache, proceeding with full scan...")
 
-        # Local pattern scan
+        # Initialize scan results
+        total_risk_score = 0
+        all_reasons = []
+        scan_sources = []
+
+        # 1. Local pattern scan (LOWERED THRESHOLD)
         print("[DEBUG] 5. Running local pattern scan...")
         try:
             risk_score, reasons = advanced_url_analysis(url)
-            print(f"[DEBUG] Local scan - Risk Score: {risk_score}, Reasons: {reasons}")
+            total_risk_score += risk_score
+            all_reasons.extend(reasons)
+            print(f"[DEBUG] Local scan - Risk Score: {risk_score}")
             
-            if risk_score >= 5:
-                print("[DEBUG] High risk detected by local scan")
+            if risk_score >= 3:  # LOWERED from 5 to 3
+                print("[DEBUG] High risk detected by local pattern scan")
                 add_to_blacklist(url, redis_config.redis_client)
-                log_scan_result(url, {"status": "unsafe", "source": "local_pattern_scan"})
-                send_alert(f"High-risk pattern in URL: {url}")
-                return jsonify({"url": url, "status": "unsafe", "source": "local_pattern_scan"}), 200
+                log_scan_result(url, {"status": "unsafe", "source": "local_pattern_scan", "risk_score": risk_score, "reasons": reasons})
+                send_alert(f"High-risk pattern in URL: {url} (Score: {risk_score})")
+                return jsonify({
+                    "url": url, 
+                    "status": "unsafe", 
+                    "source": "local_pattern_scan",
+                    "risk_score": risk_score,
+                    "reasons": reasons
+                }), 200
         except Exception as e:
             print(f"[DEBUG] Local scan FAILED: {e}")
-            traceback.print_exc()
+            all_reasons.append(f"Local scan error: {str(e)}")
 
-        # VirusTotal scan
+        # 2. VirusTotal scan
         print("[DEBUG] 6. Running VirusTotal scan...")
+        virus_total_risk = "low"
         try:
             virus_total_risk = check_url_risk(url)
             print(f"[DEBUG] VirusTotal result: '{virus_total_risk}'")
+            if virus_total_risk in ["high", "medium"]:
+                scan_sources.append(f"VirusTotal: {virus_total_risk}")
+                total_risk_score += 3 if virus_total_risk == "high" else 2
         except Exception as e:
             print(f"[DEBUG] VirusTotal scan FAILED: {e}")
             virus_total_risk = "error"
-            traceback.print_exc()
+            all_reasons.append(f"VirusTotal error: {str(e)}")
 
-        # Web scraping scan
-        print("[DEBUG] 7. Running web scraping scan...")
+        # 3. Content analysis (NEW)
+        print("[DEBUG] 7. Running content analysis...")
+        content_risky = False
+        content_analysis = ""
+        try:
+            content_risky, content_analysis = detect_content_anomalies(url)
+            print(f"[DEBUG] Content analysis: risky={content_risky}, analysis='{content_analysis}'")
+            if content_risky:
+                scan_sources.append("Content analysis")
+                total_risk_score += 2
+                all_reasons.append(content_analysis)
+        except Exception as e:
+            print(f"[DEBUG] Content analysis FAILED: {e}")
+            all_reasons.append(f"Content analysis error: {str(e)}")
+
+        # 4. Basic web scraping scan
+        print("[DEBUG] 8. Running web scraping scan...")
+        is_risky = False
+        web_scrape_analysis = ""
         try:
             is_risky, web_scrape_analysis = scrape_and_has_form(url)
             print(f"[DEBUG] Web scrape result: is_risky={is_risky}, analysis='{web_scrape_analysis}'")
+            if is_risky:
+                scan_sources.append("Form detection")
+                total_risk_score += 1
+                all_reasons.append(web_scrape_analysis)
         except Exception as e:
             print(f"[DEBUG] Web scraping FAILED: {e}")
-            is_risky = False
-            web_scrape_analysis = f"Error: {str(e)}"
-            traceback.print_exc()
+            all_reasons.append(f"Web scraping error: {str(e)}")
 
-        # Final decision
-        print("[DEBUG] 8. Making final decision...")
-        if virus_total_risk in ["high", "medium"] or is_risky:
+        # Final decision with LOWERED THRESHOLD
+        print(f"[DEBUG] 9. Making final decision - Total Risk Score: {total_risk_score}")
+        print(f"[DEBUG] Risk factors: {scan_sources}")
+        
+        # LOWERED THRESHOLD: Risk score >= 2 OR any high-confidence indicator
+        is_unsafe = (
+            total_risk_score >= 2 or  # LOWERED from 5 to 2
+            virus_total_risk in ["high", "medium"] or
+            content_risky or
+            (is_risky and total_risk_score >= 1)
+        )
+        
+        if is_unsafe:
             print("[DEBUG] DECISION: URL is UNSAFE")
             add_to_blacklist(url, redis_config.redis_client)
-            send_alert(f"Threat detected and blocked: {url}")
-            log_scan_result(url, {"status": "unsafe", "source": "scan"})
-            return jsonify({"url": url, "status": "unsafe", "source": "scan"}), 200
+            send_alert(f"Threat detected: {url} (Risk: {total_risk_score}, Sources: {', '.join(scan_sources)})")
+            log_scan_result(url, {
+                "status": "unsafe", 
+                "source": "scan",
+                "risk_score": total_risk_score,
+                "scan_sources": scan_sources,
+                "reasons": all_reasons
+            })
+            return jsonify({
+                "url": url, 
+                "status": "unsafe", 
+                "source": "scan",
+                "risk_score": total_risk_score,
+                "scan_sources": scan_sources,
+                "reasons": all_reasons[:5]  # Limit reasons shown
+            }), 200
         else:
             print("[DEBUG] DECISION: URL is SAFE")
             add_to_whitelist(url, redis_config.redis_client)
-            log_scan_result(url, {"status": "safe", "source": "scan"})
-            return jsonify({"url": url, "status": "safe", "source": "scan"}), 200
+            log_scan_result(url, {
+                "status": "safe", 
+                "source": "scan",
+                "risk_score": total_risk_score
+            })
+            return jsonify({
+                "url": url, 
+                "status": "safe", 
+                "source": "scan",
+                "risk_score": total_risk_score
+            }), 200
 
     except Exception as e:
         print(f"[DEBUG] CRITICAL ERROR in passive_scan: {e}")
         traceback.print_exc()
         return jsonify({
             "error": "Internal server error", 
-            "details": str(e),
-            "traceback": traceback.format_exc()
+            "details": str(e)
         }), 500
 
 # Other routes for manual list management
@@ -246,7 +262,7 @@ def blacklist_url():
     if add_to_blacklist(url, redis_config.redis_client):
         send_alert(f"Manual action: {url} was blacklisted.")
         return jsonify({"message": "URL added to blacklist successfully!"}), 200
-    return jsonify({"message": "URL is already in blacklist!"}), 400
+    return jsonify({"message": "URL is already in blacklist!"}), 200
 
 @app.route('/get_whitelist', methods=['GET'])
 def get_whitelist():
@@ -259,8 +275,8 @@ def get_blacklist():
     return jsonify({"blacklisted_urls": urls}), 200
 
 if __name__ == '__main__':
-    print("Starting IDPS application...")
-    print("Debug endpoints available:")
-    print("  GET /debug_redis - Check Redis connection and cache")
-    print("  GET /debug_modules - Test all modules")
+    print("🚀 Starting IDPS application...")
+    print("✅ Cache will auto-initialize on startup")
+    print("🔍 Enhanced scanning with lower detection thresholds")
+    print("📊 Debug endpoint: GET /debug_redis")
     app.run(debug=True)
