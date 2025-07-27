@@ -6,4 +6,4 @@ selenium
 SQLAlchemy
 python-dotenv
 webdriver-manager
-redis-cli
+python-dotenv
