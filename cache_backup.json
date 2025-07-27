@@ -1,30 +1,32 @@
 {
   "whitelist": [
-    "https://youtube.com/",
-    "http://www.amazon.com",
+    "br-icloud.com.br",
     "https://www.google.com",
+    "https://www.eci.gov.in/",
+    "https://www.facebook.com",
+    "https://www.truemeds.in/",
+    "https://hole.cert.pl/domains/v2/domains.txt",
+    "http://www.amazon.com",
+    "www.google.com",
+    "https://www.makemytrip.com/",
+    "https://br-icloud.com.br",
+    "https://discord.com/",
+    "https://youtube.com/",
     "https://www.reddit.com/",
     "www.facebook.com",
-    "https://discord.com/",
-    "www.google.com",
-    "https://www.facebook.com",
-    "https://www.eci.gov.in/",
-    "https://www.makemytrip.com/",
-    "https://brainly.in/",
-    "https://hole.cert.pl/domains/v2/domains.txt",
-    "https://www.truemeds.in/"
+    "https://brainly.in/"
   ],
   "blacklist": [
+    "http://espn.go.com/nba/player/_/id/3457/brandon-rush",
+    "http://mp3raid.com/music/krizz_kaliko.html",
     "bopsecrets.org/rexroth/cr/1.htm",
+    "http://www.pashminaonline.com/pure-pashminas",
+    "http://allmusic.com/album/crazy-from-the-heat-r16990",
+    "http://yourbittorrent.com/?q=anthony-hamilton-soulife",
+    "http://adventure-nicaragua.net/index.php?option=com_mailto&tmpl=component&link=aHR0cDovL2FkdmVudHVyZS1uaWNhcmFndWEubmV0L2luZGV4LnBocD9vcHRpb249Y29tX2NvbnRlbnQmdmlldz1hcnRpY2xlJmlkPTQ3OmFib3V0JmNhdGlkPTM2OmRlbW8tYXJ0aWNsZXMmSXRlbWlkPTU0",
     "http://www.lebensmittel-ueberwachung.de/index.php/aktuelles.1",
     "http://www.ikenmijnkunst.nl/index.php/exposities/exposities-2006",
-    "http://allmusic.com/album/crazy-from-the-heat-r16990",
-    "http://www.pashminaonline.com/pure-pashminas",
-    "http://www.szabadmunkaero.hu/cimoldal.html?start=12",
-    "http://yourbittorrent.com/?q=anthony-hamilton-soulife",
-    "http://mp3raid.com/music/krizz_kaliko.html",
-    "http://adventure-nicaragua.net/index.php?option=com_mailto&tmpl=component&link=aHR0cDovL2FkdmVudHVyZS1uaWNhcmFndWEubmV0L2luZGV4LnBocD9vcHRpb249Y29tX2NvbnRlbnQmdmlldz1hcnRpY2xlJmlkPTQ3OmFib3V0JmNhdGlkPTM2OmRlbW8tYXJ0aWNsZXMmSXRlbWlkPTU0",
-    "http://espn.go.com/nba/player/_/id/3457/brandon-rush"
+    "http://www.szabadmunkaero.hu/cimoldal.html?start=12"
   ],
-  "last_updated": "2025-07-27T16:28:10.751792"
+  "last_updated": "2025-07-27T16:39:25.058296"
 }

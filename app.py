@@ -102,16 +102,25 @@ def passive_scan():
         url = data['url'].strip()
         print(f"[DEBUG] 1. Processing URL: '{url}'")
 
+        # FORCE cache initialization
+        redis_config.redis_client._initialize()
+        
         # Check whitelist first
         print("[DEBUG] 2. Checking whitelist...")
-        if redis_config.redis_client.sismember('whitelist', url):
+        is_whitelisted = redis_config.redis_client.sismember('whitelist', url)
+        print(f"[DEBUG] Whitelist check result: {is_whitelisted}")
+        
+        if is_whitelisted:
             print(f"[DEBUG] URL found in whitelist: {url}")
             log_scan_result(url, {"status": "safe", "source": "whitelist"})
             return jsonify({"url": url, "status": "safe", "source": "whitelist"}), 200
 
         # Check blacklist
         print("[DEBUG] 3. Checking blacklist...")
-        if redis_config.redis_client.sismember('blacklist', url):
+        is_blacklisted = redis_config.redis_client.sismember('blacklist', url)
+        print(f"[DEBUG] Blacklist check result: {is_blacklisted}")
+        
+        if is_blacklisted:
             print(f"[DEBUG] URL found in blacklist: {url}")
             log_scan_result(url, {"status": "unsafe", "source": "blacklist"})
             return jsonify({"url": url, "status": "unsafe", "source": "blacklist"}), 200
@@ -122,6 +131,7 @@ def passive_scan():
         total_risk_score = 0
         all_reasons = []
         scan_sources = []
+        scan_successful = False
 
         # 1. Local pattern scan (LOWERED THRESHOLD)
         print("[DEBUG] 5. Running local pattern scan...")
@@ -130,6 +140,7 @@ def passive_scan():
             total_risk_score += risk_score
             all_reasons.extend(reasons)
             print(f"[DEBUG] Local scan - Risk Score: {risk_score}")
+            scan_successful = True
             
             if risk_score >= 3:  # LOWERED from 5 to 3
                 print("[DEBUG] High risk detected by local pattern scan")
@@ -156,6 +167,7 @@ def passive_scan():
             if virus_total_risk in ["high", "medium"]:
                 scan_sources.append(f"VirusTotal: {virus_total_risk}")
                 total_risk_score += 3 if virus_total_risk == "high" else 2
+                scan_successful = True
         except Exception as e:
             print(f"[DEBUG] VirusTotal scan FAILED: {e}")
             virus_total_risk = "error"
@@ -172,6 +184,7 @@ def passive_scan():
                 scan_sources.append("Content analysis")
                 total_risk_score += 2
                 all_reasons.append(content_analysis)
+                scan_successful = True
         except Exception as e:
             print(f"[DEBUG] Content analysis FAILED: {e}")
             all_reasons.append(f"Content analysis error: {str(e)}")
@@ -187,9 +200,19 @@ def passive_scan():
                 scan_sources.append("Form detection")
                 total_risk_score += 1
                 all_reasons.append(web_scrape_analysis)
+                scan_successful = True
         except Exception as e:
             print(f"[DEBUG] Web scraping FAILED: {e}")
             all_reasons.append(f"Web scraping error: {str(e)}")
+
+        # Check if scan completely failed
+        if not scan_successful:
+            print("[DEBUG] ALL SCANS FAILED - returning error")
+            return jsonify({
+                "error": "All scan methods failed", 
+                "url": url,
+                "details": all_reasons
+            }), 500
 
         # Final decision with LOWERED THRESHOLD
         print(f"[DEBUG] 9. Making final decision - Total Risk Score: {total_risk_score}")
@@ -273,6 +296,37 @@ def get_whitelist():
 def get_blacklist():
     urls = get_blacklisted(redis_config.redis_client)
     return jsonify({"blacklisted_urls": urls}), 200
+
+@app.route('/debug_redis', methods=['GET'])
+def debug_redis():
+    """Enhanced debug Redis connection and cache contents"""
+    try:
+        # Force initialization
+        redis_config.redis_client._initialize()
+        
+        # Test Redis connection
+        redis_config.redis_client.ping()
+        
+        # Get cache contents
+        whitelist = redis_config.redis_client.smembers('whitelist')
+        blacklist = redis_config.redis_client.smembers('blacklist')
+        
+        return jsonify({
+            "redis_status": "connected",
+            "cache_initialized": redis_config.redis_client.initialized,
+            "whitelist_count": len(whitelist),
+            "blacklist_count": len(blacklist),
+            "whitelist": whitelist[:10],  # Show first 10
+            "blacklist": blacklist[:10],   # Show first 10
+            "full_whitelist": whitelist,  # Show all for debugging
+            "full_blacklist": blacklist   # Show all for debugging
+        })
+    except Exception as e:
+        return jsonify({
+            "redis_status": "failed",
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }), 500
 
 if __name__ == '__main__':
     print("🚀 Starting IDPS application...")
