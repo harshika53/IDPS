@@ -1,29 +1,30 @@
 {
   "whitelist": [
-    "https://www.google.com",
-    "quickfacts.census.gov/qfd/maps/iowa_map.html",
-    "https://www.eci.gov.in/",
-    "https://www.facebook.com",
-    "http://www.amazon.com",
+    "uk.linkedin.com/pub/steve-rubenstein/8/718/755",
     "https://www.truemeds.in/",
-    "https://youtube.com/",
-    "https://discord.com/",
-    "https://www.makemytrip.com/",
+    "https://www.facebook.com",
+    "https://www.reddit.com/",
+    "http://www.amazon.com",
     "https://brainly.in/",
-    "https://www.reddit.com/"
+    "https://www.eci.gov.in/",
+    "nugget.ca/ArticleDisplay.aspx?archive=true&e=1160966",
+    "https://discord.com/",
+    "https://youtube.com/",
+    "https://www.google.com",
+    "https://www.makemytrip.com/"
   ],
   "blacklist": [
+    "http://www.szabadmunkaero.hu/cimoldal.html?start=12",
+    "http://www.ikenmijnkunst.nl/index.php/exposities/exposities-2006",
+    "http://www.pashminaonline.com/pure-pashminas",
     "http://yourbittorrent.com/?q=anthony-hamilton-soulife",
     "http://allmusic.com/album/crazy-from-the-heat-r16990",
-    "http://espn.go.com/nba/player/_/id/3457/brandon-rush",
     "bopsecrets.org/rexroth/cr/1.htm",
-    "http://www.pashminaonline.com/pure-pashminas",
-    "http://www.ikenmijnkunst.nl/index.php/exposities/exposities-2006",
-    "http://mp3raid.com/music/krizz_kaliko.html",
     "http://larcadelcarnevale.com/catalogo/palloncini",
-    "http://www.lebensmittel-ueberwachung.de/index.php/aktuelles.1",
+    "http://mp3raid.com/music/krizz_kaliko.html",
+    "http://espn.go.com/nba/player/_/id/3457/brandon-rush",
     "http://adventure-nicaragua.net/index.php?option=com_mailto&tmpl=component&link=aHR0cDovL2FkdmVudHVyZ...",
-    "http://www.szabadmunkaero.hu/cimoldal.html?start=12"
+    "http://www.lebensmittel-ueberwachung.de/index.php/aktuelles.1"
   ],
-  "last_updated": "2025-07-28T01:55:28.736854"
+  "last_updated": "2025-07-28T02:07:45.146723"
 }

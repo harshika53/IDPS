@@ -8,6 +8,9 @@ import traceback
 # Load environment variables
 load_dotenv()
 
+# Get VirusTotal API key from environment
+VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY")
+
 # Custom module imports
 import redis_config
 from urls import add_to_whitelist, add_to_blacklist, get_whitelisted, get_blacklisted
