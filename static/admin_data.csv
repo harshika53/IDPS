@@ -20,7 +20,8 @@ id,url,category,timestamp,status,source
 19,www.google.com,w,2025-07-27 16:23:38,safe,scan
 20,www.google.com,w,2025-07-27 16:24:50,safe,whitelist
 21,http://www.pashminaonline.com/pure-pashminas,b,2025-07-27 16:25:40,unsafe,blacklist
-22,www.google.com,w,2025-07-27 16:38:19,safe,whitelist
-23,br-icloud.com.br,w,2025-07-27 16:40:08,safe,whitelist
-24,br-icloud.com.br,w,2025-07-27 16:40:28,safe,whitelist
-25,br-icloud.com.br,w,2025-07-27 16:40:32,safe,whitelist
+22,br-icloud.com.br,w,2025-07-27 16:55:01,safe,whitelist
+23,bopsecrets.org/rexroth/cr/1.htm,b,2025-07-27 16:55:37,unsafe,blacklist
+24,http://www.lebensmittel-ueberwachung.de/index.php/aktuelles.1,b,2025-07-27 16:56:23,unsafe,blacklist
+25,http://larcadelcarnevale.com/catalogo/palloncini,b,2025-07-27 16:57:15,unsafe,scan
+26,br-icloud.com.br,w,2025-07-27 16:59:04,safe,whitelist

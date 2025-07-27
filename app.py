@@ -29,21 +29,27 @@ def send_alert(message):
 # --- Debug Routes ---
 @app.route('/debug_redis', methods=['GET'])
 def debug_redis():
-    """Debug Redis connection and cache contents"""
+    """Enhanced debug Redis connection and cache contents"""
     try:
+        # Force initialization
+        redis_config.redis_client._initialize()
+        
         # Test Redis connection
         redis_config.redis_client.ping()
         
         # Get cache contents
-        whitelist = list(redis_config.redis_client.smembers('whitelist'))
-        blacklist = list(redis_config.redis_client.smembers('blacklist'))
+        whitelist = redis_config.redis_client.smembers('whitelist')
+        blacklist = redis_config.redis_client.smembers('blacklist')
         
         return jsonify({
             "redis_status": "connected",
+            "cache_initialized": redis_config.redis_client.initialized,
             "whitelist_count": len(whitelist),
             "blacklist_count": len(blacklist),
             "whitelist": whitelist[:10],  # Show first 10
-            "blacklist": blacklist[:10]   # Show first 10
+            "blacklist": blacklist[:10],   # Show first 10
+            "full_whitelist": whitelist,  # Show all for debugging
+            "full_blacklist": blacklist   # Show all for debugging
         })
     except Exception as e:
         return jsonify({
@@ -271,61 +277,115 @@ def passive_scan():
 # Other routes for manual list management
 @app.route('/add_to_whitelist', methods=['POST'])
 def whitelist_url():
-    url = request.json.get('url')
-    print(f"[DEBUG] Manual whitelist add: {url}")
-    if add_to_whitelist(url, redis_config.redis_client):
-        send_alert(f"Manual action: {url} was whitelisted.")
-        return jsonify({"message": "URL added to whitelist successfully!"}), 200
-    return jsonify({"message": "URL is already in whitelist!"}), 400
+    try:
+        data = request.get_json()
+        if not data or 'url' not in data:
+            return jsonify({"error": "URL is required"}), 400
+            
+        url = data['url'].strip()
+        print(f"[DEBUG] Manual whitelist add: {url}")
+        
+        # Force cache initialization
+        redis_config.redis_client._initialize()
+        
+        if add_to_whitelist(url, redis_config.redis_client):
+            send_alert(f"Manual action: {url} was whitelisted.")
+            log_scan_result(url, {"status": "safe", "source": "manual_whitelist"})
+            return jsonify({"message": "URL added to whitelist successfully!"}), 200
+        return jsonify({"message": "URL is already in whitelist!"}), 400
+    except Exception as e:
+        print(f"[DEBUG] Error in whitelist_url: {e}")
+        return jsonify({"error": "Internal server error"}), 500
 
 @app.route('/add_to_blacklist', methods=['POST'])
 def blacklist_url():
-    url = request.json.get('url')
-    print(f"[DEBUG] Manual blacklist add: {url}")
-    if add_to_blacklist(url, redis_config.redis_client):
-        send_alert(f"Manual action: {url} was blacklisted.")
-        return jsonify({"message": "URL added to blacklist successfully!"}), 200
-    return jsonify({"message": "URL is already in blacklist!"}), 200
+    try:
+        data = request.get_json()
+        if not data or 'url' not in data:
+            return jsonify({"error": "URL is required"}), 400
+            
+        url = data['url'].strip()
+        print(f"[DEBUG] Manual blacklist add: {url}")
+        
+        # Force cache initialization
+        redis_config.redis_client._initialize()
+        
+        if add_to_blacklist(url, redis_config.redis_client):
+            send_alert(f"Manual action: {url} was blacklisted.")
+            log_scan_result(url, {"status": "unsafe", "source": "manual_blacklist"})
+            return jsonify({"message": "URL added to blacklist successfully!"}), 200
+        return jsonify({"message": "URL is already in blacklist!"}), 200
+    except Exception as e:
+        print(f"[DEBUG] Error in blacklist_url: {e}")
+        return jsonify({"error": "Internal server error"}), 500
 
 @app.route('/get_whitelist', methods=['GET'])
 def get_whitelist():
-    urls = get_whitelisted(redis_config.redis_client)
-    return jsonify({"whitelisted_urls": urls}), 200
+    try:
+        # Force cache initialization
+        redis_config.redis_client._initialize()
+        urls = get_whitelisted(redis_config.redis_client)
+        return jsonify({"whitelisted_urls": urls}), 200
+    except Exception as e:
+        print(f"[DEBUG] Error in get_whitelist: {e}")
+        return jsonify({"error": "Failed to fetch whitelist"}), 500
 
 @app.route('/get_blacklist', methods=['GET'])
 def get_blacklist():
-    urls = get_blacklisted(redis_config.redis_client)
-    return jsonify({"blacklisted_urls": urls}), 200
-
-@app.route('/debug_redis', methods=['GET'])
-def debug_redis():
-    """Enhanced debug Redis connection and cache contents"""
     try:
-        # Force initialization
+        # Force cache initialization
         redis_config.redis_client._initialize()
-        
-        # Test Redis connection
+        urls = get_blacklisted(redis_config.redis_client)
+        return jsonify({"blacklisted_urls": urls}), 200
+    except Exception as e:
+        print(f"[DEBUG] Error in get_blacklist: {e}")
+        return jsonify({"error": "Failed to fetch blacklist"}), 500
+
+# Additional utility routes
+@app.route('/clear_cache', methods=['POST'])
+def clear_cache():
+    """Clear all cache - useful for testing"""
+    try:
+        redis_config.clear_all_cache()
+        send_alert("Cache cleared by admin")
+        return jsonify({"message": "Cache cleared successfully"}), 200
+    except Exception as e:
+        print(f"[DEBUG] Error clearing cache: {e}")
+        return jsonify({"error": "Failed to clear cache"}), 500
+
+@app.route('/reinitialize_cache', methods=['POST'])
+def reinitialize_cache():
+    """Force reinitialize cache from CSV files"""
+    try:
+        redis_config.redis_client.initialized = False
+        redis_config.redis_client._initialize()
+        send_alert("Cache reinitialized from CSV files")
+        return jsonify({"message": "Cache reinitialized successfully"}), 200
+    except Exception as e:
+        print(f"[DEBUG] Error reinitializing cache: {e}")
+        return jsonify({"error": "Failed to reinitialize cache"}), 500
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint"""
+    try:
+        # Check cache
         redis_config.redis_client.ping()
         
-        # Get cache contents
-        whitelist = redis_config.redis_client.smembers('whitelist')
-        blacklist = redis_config.redis_client.smembers('blacklist')
+        # Check if CSV files exist
+        admin_file = os.path.join(app.config.get('STATIC_FOLDER'), 'admin_data.csv')
+        csv_exists = os.path.exists(admin_file)
         
         return jsonify({
-            "redis_status": "connected",
+            "status": "healthy",
             "cache_initialized": redis_config.redis_client.initialized,
-            "whitelist_count": len(whitelist),
-            "blacklist_count": len(blacklist),
-            "whitelist": whitelist[:10],  # Show first 10
-            "blacklist": blacklist[:10],   # Show first 10
-            "full_whitelist": whitelist,  # Show all for debugging
-            "full_blacklist": blacklist   # Show all for debugging
-        })
+            "csv_files_exist": csv_exists,
+            "timestamp": traceback.format_exc()
+        }), 200
     except Exception as e:
         return jsonify({
-            "redis_status": "failed",
-            "error": str(e),
-            "traceback": traceback.format_exc()
+            "status": "unhealthy",
+            "error": str(e)
         }), 500
 
 if __name__ == '__main__':
@@ -333,4 +393,16 @@ if __name__ == '__main__':
     print("✅ Cache will auto-initialize on startup")
     print("🔍 Enhanced scanning with lower detection thresholds")
     print("📊 Debug endpoint: GET /debug_redis")
+    print("🔧 Additional endpoints:")
+    print("   - POST /clear_cache (clear all cache)")
+    print("   - POST /reinitialize_cache (reload from CSV)")
+    print("   - GET /health (health check)")
+    
+    # Force early initialization
+    try:
+        redis_config.redis_client._initialize()
+        print("✅ Cache pre-initialized successfully")
+    except Exception as e:
+        print(f"⚠️  Cache pre-initialization failed: {e}")
+    
     app.run(debug=True)
