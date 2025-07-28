@@ -11,3 +11,5 @@ id,url,category,timestamp,status,source
 10,http://www.amazon.com,w,2025-01-15 10:17:00,safe,manual
 11,https://log-test-safe.com,w,2025-07-28 02:49:02,safe,scan
 12,https://www.stanford.edu,w,2025-07-28 02:50:39,safe,manual_whitelist
+13,en.wikipedia.org/wiki/North_Dakota,w,2025-07-28 11:34:51,safe,manual_whitelist
+14,movies.yahoo.com/shop?d=hv&cf=info&id=1800340831,w,2025-07-28 11:44:07,safe,manual_whitelist

@@ -15,3 +15,5 @@ id,url,category,timestamp,status,source
 14,https://log-test-unsafe.com,b,2025-07-28 02:49:02,unsafe,scan
 15,corporationwiki.com/Ohio/Columbus/frank-s-benson-P3333917.aspx,b,2025-07-28 02:52:22,unsafe,manual_blacklist
 16,http://www.vnic.co/khach-hang.html,b,2025-07-28 02:53:42,unsafe,manual_blacklist
+17,http://peluqueriadeautor.com/index.php?option=com_virtuemart&page=shop.browse&category_id=31&Itemid=...,b,2025-07-28 11:35:26,unsafe,manual_blacklist
+18,cyndislist.com/us/pa/counties,b,2025-07-28 11:44:37,unsafe,manual_blacklist

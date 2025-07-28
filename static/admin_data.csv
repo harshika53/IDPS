@@ -50,3 +50,12 @@ id,url,category,timestamp,status,source
 49,http://www.vnic.co/khach-hang.html,b,2025-07-28 02:53:42,unsafe,scan
 50,www.google.com,w,2025-07-28 02:57:20,safe,whitelist
 51,www.google.com,w,2025-07-28 03:00:14,safe,whitelist
+52,en.wikipedia.org/wiki/North_Dakota,w,2025-07-28 11:34:51,safe,manual_whitelist
+53,en.wikipedia.org/wiki/North_Dakota,w,2025-07-28 11:34:52,safe,scan
+54,http://peluqueriadeautor.com/index.php?option=com_virtuemart&page=shop.browse&category_id=31&Itemid=...,b,2025-07-28 11:35:26,unsafe,manual_blacklist
+55,http://peluqueriadeautor.com/index.php?option=com_virtuemart&page=shop.browse&category_id=31&Itemid=...,b,2025-07-28 11:35:26,unsafe,scan
+56,movies.yahoo.com/shop?d=hv&cf=info&id=1800340831,w,2025-07-28 11:44:07,safe,manual_whitelist
+57,movies.yahoo.com/shop?d=hv&cf=info&id=1800340831,w,2025-07-28 11:44:07,safe,scan
+58,cyndislist.com/us/pa/counties,b,2025-07-28 11:44:37,unsafe,manual_blacklist
+59,cyndislist.com/us/pa/counties,b,2025-07-28 11:44:37,unsafe,scan
+60,http://allmusic.com/album/crazy-from-the-heat-r16990,b,2025-07-28 11:45:10,unsafe,blacklist
