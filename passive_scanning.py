@@ -1,43 +1,41 @@
+import os
 import requests
-import base64
+from dotenv import load_dotenv
 
-# Replace this with your actual VirusTotal API key
-VIRUSTOTAL_API_KEY = "f506c767fc5f3764b4d20bd2d3d104a9d88eaec45c7f3cddb156ef3def82046d"
+load_dotenv()
+VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY")
 
-def check_virustotal(url):
-    """Check the URL using VirusTotal API and return threat level."""
-    headers = {"x-apikey": VIRUSTOTAL_API_KEY}
-    
-    # Encode the URL to base64 URL-safe format for VirusTotal API
-    encoded_url = base64.urlsafe_b64encode(url.encode()).decode().strip("=")
-    #print(f"Encoded URL Hash: {url_hash}")  # Debugging: Print the URL hash
-    
-    api_url = f"https://www.virustotal.com/api/v3/urls/{encoded_url}"
-
-    try:
-        # Send a GET request to the VirusTotal API
-        response = requests.get(api_url, headers=headers)
-
-        # Check if the request was successful
-        if response.status_code == 200:
-            data = response.json()
-            
-            # Extract the number of malicious detections
-            positives = data.get("data", {}).get("attributes", {}).get("last_analysis_stats", {}).get("malicious", 0)
-            
-            # Determine threat level based on malicious detections
-            if positives > 5:
-                return "high"
-            elif positives > 1:
-                return "medium"
-            else:
-                return "low"
-        else:
-            # Handle unsuccessful responses
-            print(f"Error: Received status code {response.status_code} from VirusTotal API.")
-            return "error"
-    except Exception as e:
-        # Handle request errors
-        print(f"Error connecting to VirusTotal: {e}")
+def check_url_risk(url):
+    """
+    Checks the URL using the VirusTotal API and returns a risk level.
+    """
+    print("[DEBUG-VT] Running VirusTotal check...")
+    if not VIRUSTOTAL_API_KEY:
+        print("[DEBUG-VT] ERROR: VirusTotal API key not found in .env file.")
         return "error"
 
+    try:
+        encoded_url = requests.utils.quote(url, safe='')
+        api_url = f"https://www.virustotal.com/api/v3/urls/{encoded_url}"
+        headers = {"x-apikey": VIRUSTOTAL_API_KEY}
+        
+        print(f"[DEBUG-VT] Making request to VirusTotal API...")
+        response = requests.get(api_url, headers=headers, timeout=20)
+        print(f"[DEBUG-VT] API Response Status Code: {response.status_code}")
+
+        if response.status_code == 200:
+            data = response.json()
+            stats = data.get("data", {}).get("attributes", {}).get("last_analysis_stats", {})
+            malicious = stats.get("malicious", 0)
+            print(f"[DEBUG-VT] Malicious votes found: {malicious}")
+            
+            if malicious > 5: return "high"
+            elif malicious > 0: return "medium"
+            else: return "low"
+        else:
+            print(f"[DEBUG-VT] API Error Body: {response.text}")
+            return "error"
+            
+    except requests.RequestException as e:
+        print(f"[DEBUG-VT] CRITICAL ERROR making request: {e}")
+        return "error"

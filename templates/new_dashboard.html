@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IDPS Interactive Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../static/js/new_style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>IDPS</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#view-scanner" class="nav-link active"><span>&#128270;</span> URL Scanner</a>
+                <a href="#view-lists" class="nav-link"><span>&#128220;</span> Manage Lists</a>
+                <a href="#view-stats" class="nav-link"><span>&#128202;</span> Statistics</a>
+                <a href="#view-logs" class="nav-link"><span>&#128196;</span> Activity Logs</a>
+                <a href="#view-faq" class="nav-link"><span>&#10067;</span> FAQ</a>
+            </nav>
+            <div class="sidebar-footer">
+                <p>&copy; 2025 IDPS Project</p>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="main-header">
+                <h1 id="main-title">URL Scanner</h1>
+                <div id="toast-notification" class="toast"></div>
+            </header>
+
+            <div id="view-scanner" class="view active-view">
+                <div class="card">
+                    <h3>Real-Time URL Scanner</h3>
+                    <p>Enter a URL to perform a quick and passive security scan.</p>
+                    <div class="scan-form">
+                        <input type="text" id="url-input" placeholder="https://example.com">
+                        <button id="scan-button">Scan Now</button>
+                    </div>
+                    <div id="scan-result" class="scan-result-area">
+                        <p>Status: <span id="scan-status">Awaiting scan...</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-lists" class="view">
+                <div class="card list-card">
+                    <h3>Whitelist</h3>
+                    <ul id="whitelist-ul"></ul>
+                    <a href="{{ url_for('download_csv', filename='whitelist.csv') }}" class="download-btn" download>Download .csv</a>
+                </div>
+                <div class="card list-card">
+                    <h3>Blacklist</h3>
+                    <ul id="blacklist-ul"></ul>
+                    <a href="{{ url_for('download_csv', filename='blacklist.csv') }}" class="download-btn" download>Download .csv</a>
+                </div>
+            </div>
+
+            <div id="view-stats" class="view">
+                <div class="card">
+                    <h3>Scan Statistics</h3>
+                    <p>Live summary of scanned URLs.</p>
+                    <div class="chart-container">
+                        <canvas id="scan-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="view-logs" class="view">
+    <div class="card notification-card">
+        <h3>Recent Threat Alerts</h3>
+        <div id="notification-list">
+            <p class="log-entry">No recent alerts.</p>
+        </div>
+    </div>
+
+    <div class="card">
+       <h3>All Activity Logs</h3>
+       <p>A persistent record of all scans (safe and unsafe) is kept in the downloadable CSV file.</p>
+       <div id="activity-log-content">
+           <p class="log-entry">System initialized successfully.</p>
+       </div>
+        <a href="../static/admin_data.csv" class="download-btn" download>Download Full Log (.csv)</a>
+   </div>
+</div>
+
+            <div id="view-faq" class="view">
+                <div class="card">
+                    <h3>Frequently Asked Questions</h3>
+                    <div class="faq-container">
+                        <details>
+                            <summary>How do I whitelist or blacklist a URL?</summary>
+                            <p>After scanning a URL, you can choose to manually add it to the whitelist or blacklist. You can also add URLs directly via the API endpoints.</p>
+                        </details>
+                        <details>
+                            <summary>Can I view past scan results?</summary>
+                            <p>Individual past results are not stored, but the "Statistics" view shows an aggregate summary of all safe vs. unsafe scans performed.</p>
+                        </details>
+                         <details>
+                            <summary>How does the scanner decide if a URL is unsafe?</summary>
+                            <p>It uses a two-step process: first, it checks the URL against VirusTotal's database of known threats. Second, it dynamically loads the page to check for suspicious elements like phishing forms.</p>
+                        </details>
+                        <details>
+                            <summary>What happens if an anomaly is detected?</summary>
+                            <p>An alert will notify you in real-time on the dashboard. The system also logs the unsafe URL to the blacklist and the event in the activity logs.</p>
+                        </details>
+                        <details>
+                            <summary>Why does a scan sometimes fail?</summary>
+                            <p>A scan can fail due to network issues, if the target website is down, or if the site uses advanced anti-bot measures that block our automated scanner.</p>
+                        </details>
+                        <details>
+                            <summary>How do I install this system?</summary>
+                            <p>Set up the backend (Flask), install dependencies from `requirements.txt`, ensure Redis is running, and configure your API keys in a `.env` file. For full setup, refer to the installation documentation.</p>
+                        </details>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../static/js/new_script.js"></script>
+</body>
+</html>

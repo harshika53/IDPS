@@ -1,0 +1,38 @@
+{
+  "whitelist": [
+    "movies.yahoo.com/shop?d=hv&cf=info&id=1800340831",
+    "https://www.reddit.com/",
+    "https://www.makemytrip.com/",
+    "https://discord.com/",
+    "https://www.eci.gov.in/",
+    "http://www.amazon.com",
+    "https://www.truemeds.in/",
+    "https://www.google.com",
+    "https://youtube.com/",
+    "https://brainly.in/",
+    "https://log-test-safe.com",
+    "https://www.stanford.edu",
+    "https://www.facebook.com",
+    "en.wikipedia.org/wiki/North_Dakota"
+  ],
+  "blacklist": [
+    "http://larcadelcarnevale.com/catalogo/palloncini",
+    "bopsecrets.org/rexroth/cr/1.htm",
+    "http://allmusic.com/album/crazy-from-the-heat-r16990",
+    "http://www.szabadmunkaero.hu/cimoldal.html?start=12",
+    "http://www.ikenmijnkunst.nl/index.php/exposities/exposities-2006",
+    "http://www.pashminaonline.com/pure-pashminas",
+    "http://www.lebensmittel-ueberwachung.de/index.php/aktuelles.1",
+    "corporationwiki.com/Ohio/Columbus/frank-s-benson-P3333917.aspx",
+    "http://espn.go.com/nba/player/_/id/3457/brandon-rush",
+    "http://www.vnic.co/khach-hang.html",
+    "cyndislist.com/us/pa/counties",
+    "https://log-test-unsafe.com",
+    "http://peluqueriadeautor.com/index.php?option=com_virtuemart&page=shop.browse&category_id=31&Itemid=...",
+    "http://yourbittorrent.com/?q=anthony-hamilton-soulife",
+    "http://earth-sure.com/industrial-tech/everlast-impact-resistant-dumpster-enclosure",
+    "http://mp3raid.com/music/krizz_kaliko.html",
+    "http://adventure-nicaragua.net/index.php?option=com_mailto&tmpl=component&link=aHR0cDovL2FkdmVudHVyZ..."
+  ],
+  "last_updated": "2025-07-30T12:19:30.001048"
+}

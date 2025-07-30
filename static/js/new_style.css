@@ -1,0 +1,147 @@
+/* --- General Setup & Variables --- */
+:root {
+    --bg-primary: #1a1c23;
+    --bg-secondary: #252831;
+    --bg-tertiary: #313543;
+    --text-primary: #e0e0e0;
+    --text-secondary: #a0a0a0;
+    --accent-primary: #00aaff;
+    --accent-safe: #28a745;
+    --accent-unsafe: #dc3545;
+    --font-family: 'Poppins', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+/* --- Main Layout --- */
+.dashboard-container { display: flex; min-height: 100vh; }
+.sidebar {
+    width: 240px;
+    background-color: var(--bg-secondary);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--bg-tertiary);
+}
+.main-content { flex: 1; padding: 2rem; overflow-y: auto; }
+
+/* --- Sidebar --- */
+.sidebar-header h2 { font-weight: 700; font-size: 1.8rem; margin-bottom: 2rem; }
+.sidebar-nav a {
+    display: flex;
+    align-items: center;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 0.8rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    font-weight: 400;
+    transition: background-color 0.3s, color 0.3s;
+}
+.sidebar-nav a.active, .sidebar-nav a:hover {
+    background-color: var(--accent-primary);
+    color: #fff;
+}
+.sidebar-nav a span { margin-right: 1rem; font-size: 1.2rem; }
+.sidebar-footer { margin-top: auto; font-size: 0.8rem; color: var(--text-secondary); text-align: center; }
+
+/* --- Main Content & Cards --- */
+.main-header h1 { font-size: 2rem; font-weight: 600; margin-bottom: 2rem; }
+
+/* --- View Switching Logic --- */
+.view {
+    display: none; /* Hide all views by default */
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+.view.active-view {
+    display: grid; /* Show only the active view */
+}
+/* Special case for single-column views */
+#view-scanner, #view-stats, #view-faq, #view-logs { grid-template-columns: 1fr; }
+
+
+.card {
+    background-color: var(--bg-secondary);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--bg-tertiary);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+.card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); }
+.card h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; }
+.card p { color: var(--text-secondary); margin-bottom: 1rem; }
+
+/* --- Specific Card Elements --- */
+.scan-form { display: flex; gap: 0.5rem; }
+#url-input {
+    flex-grow: 1; padding: 0.7rem 1rem; border-radius: 6px; border: 1px solid var(--bg-tertiary);
+    background-color: var(--bg-primary); color: var(--text-primary); font-size: 1rem;
+}
+#scan-button {
+    padding: 0.7rem 1.5rem; border: none; background-color: var(--accent-primary);
+    color: #fff; font-weight: 600; border-radius: 6px; cursor: pointer; transition: background-color 0.3s;
+}
+#scan-button:hover { background-color: #0088cc; }
+.scan-result-area { margin-top: 1rem; padding: 0.8rem; background-color: var(--bg-primary); border-radius: 6px; }
+#scan-status.safe { color: var(--accent-safe); }
+#scan-status.unsafe { color: var(--accent-unsafe); }
+
+.list-card ul { list-style: none; max-height: 200px; overflow-y: auto; padding-right: 10px; }
+.list-card li { padding: 0.3rem 0; border-bottom: 1px solid var(--bg-tertiary); color: var(--text-secondary); word-break: break-all; }
+
+.download-btn {
+    display: inline-block; margin-top: 1rem; padding: 0.5rem 1rem; background-color: var(--bg-tertiary);
+    color: var(--text-primary); text-decoration: none; border-radius: 6px; font-size: 0.9rem; transition: background-color 0.3s;
+}
+.download-btn:hover { background-color: #4a4f61; }
+
+#activity-log-content { max-height: 250px; overflow-y: auto; }
+.log-entry { font-size: 0.9rem; padding: 0.2rem 0; border-bottom: 1px solid var(--bg-tertiary); }
+
+/* --- FAQ Section --- */
+.faq-container details {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--bg-tertiary);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    padding: 1rem;
+}
+.faq-container summary {
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none; /* Hide default marker */
+}
+.faq-container summary::-webkit-details-marker { display: none; } /* Hide default marker for Chrome/Safari */
+.faq-container summary::before {
+    content: '+';
+    font-size: 1.2rem;
+    margin-right: 0.8rem;
+    transition: transform 0.2s;
+    display: inline-block;
+}
+.faq-container details[open] summary::before { transform: rotate(45deg); }
+.faq-container details p {
+    padding-top: 1rem;
+    margin-left: 1.8rem;
+    color: var(--text-secondary);
+}
+
+
+/* --- Toast Notification --- */
+.toast {
+    position: fixed; top: 20px; right: 20px; padding: 1rem 1.5rem;
+    border-radius: 8px; color: #fff; font-weight: 600;
+    visibility: hidden; opacity: 0; transition: opacity 0.5s, transform 0.5s; transform: translateY(-20px);
+}
+.toast.show { visibility: visible; opacity: 1; transform: translateY(0); }
+.toast.safe { background-color: var(--accent-safe); }
+.toast.unsafe { background-color: var(--accent-unsafe); }
+.toast.info { background-color: var(--accent-primary); }
