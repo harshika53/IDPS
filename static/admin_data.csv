@@ -59,3 +59,5 @@ id,url,category,timestamp,status,source
 58,cyndislist.com/us/pa/counties,b,2025-07-28 11:44:37,unsafe,manual_blacklist
 59,cyndislist.com/us/pa/counties,b,2025-07-28 11:44:37,unsafe,scan
 60,http://allmusic.com/album/crazy-from-the-heat-r16990,b,2025-07-28 11:45:10,unsafe,blacklist
+61,http://earth-sure.com/industrial-tech/everlast-impact-resistant-dumpster-enclosure,b,2025-07-30 12:19:30,unsafe,manual_blacklist
+62,http://earth-sure.com/industrial-tech/everlast-impact-resistant-dumpster-enclosure,b,2025-07-30 12:19:30,unsafe,scan
