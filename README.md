@@ -41,13 +41,10 @@ A robust **web-based Intrusion Detection and Prevention System** built with **Py
 
 ---
 
-## 🌱 Future Scope
+##   Future Scope
 
 1. 🧠 **Advanced AI Integration**  
    - Enhance detection with **deep learning models** (e.g., LSTM, CNN) for higher precision.
-
-2. 🌐 **Global Threat Intelligence Feeds**  
-   - Integration with real-time **threat intelligence databases** (AlienVault, IBM X-Force, etc.)
 
 3. ☁️ **Multi-cloud Deployment**  
    - Containerize and deploy the system on **AWS, GCP, or Azure** for enterprise scalability.
@@ -55,8 +52,6 @@ A robust **web-based Intrusion Detection and Prevention System** built with **Py
 4. ⚙️ **Automated Threat Response**  
    - Implement automatic actions like **IP blocking, firewall updates**, or **session termination**.
 
-5. 🧪 **User Management System**  
-   - Add authentication and account management for personalized reports and session history.
 ---
 
 ## 🚀 How to Run Locally
