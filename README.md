@@ -4,8 +4,6 @@ A robust **web-based Intrusion Detection and Prevention System** built with **Py
 
 ---
 
----
-
 ## 🎯 Features & Objectives
 
 1. 🔍 **Real-time URL Scanning**  
